@@ -8,7 +8,7 @@ class Customer(Base):
     name = Column(String(32), nullable=False)
     gender = Column(String(1), nullable=False)
     birthdate = Column(Date, nullable=False)
-    phone_number = Column(Integer, nullable=False)
+    phone_number = Column(String(32), nullable=False)
     address = Column(String(64), nullable=False)
 
     customer_account = relationship("CustomerAccount", back_populates="customer")
