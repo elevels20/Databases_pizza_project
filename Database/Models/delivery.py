@@ -3,24 +3,24 @@ from sqlalchemy.orm import relationship
 from .base import Base
 
 class DeliveryPerson(Base):
-    __tablename__ = 'delivery_person'
+    __tablename__ = 'delivery_persons'
 
-    DeliveryPersonID = Column(Integer, primary_key=True, autoincrement=True)
-    Name = Column(String(32), nullable=False)
-    PostalCodeID = Column(Integer, ForeignKey('postal_code_area.PostalCodeAreaID'), nullable=False)
-    Availability = Column(Boolean, nullable=False, default=True)
-    CurrentOrderID =  Column(Integer, ForeignKey('orders.OrderID'), nullable=True)
-    UnavailableUntil = Column(DateTime, nullable=True, default=None)
+    delivery_person_id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(32), nullable=False)
+    postal_code_area_id = Column(Integer, ForeignKey('postal_code_areas.postal_code_area_id'), nullable=False)
+    availability = Column(Boolean, nullable=False, default=True)
+    current_order_id =  Column(Integer, ForeignKey('orders.order_id'), nullable=True)
+    unavailable_until = Column(DateTime, nullable=True, default=None)
 
-    current_order = relationship("Orders", back_populates="delivery_person")
+    current_order = relationship("Order", back_populates="delivery_person")
     postal_code_area = relationship("PostalCodeArea", back_populates="delivery_person")
 
 class PostalCodeArea(Base):
-    __tablename__ = 'postal_code_area'
+    __tablename__ = 'postal_code_areas'
 
-    PostalCodeAreaID = Column(Integer, primary_key=True, autoincrement=True)
-    PostalCode = Column(String(6), nullable=False)
-    City = Column(String(32), nullable=False)
-    DeliveryPersonCount = Column(Integer, nullable=False)
+    postal_code_area_id = Column(Integer, primary_key=True, autoincrement=True)
+    postal_code = Column(String(6), nullable=False)
+    city = Column(String(32), nullable=False)
+    delivery_person_count = Column(Integer, nullable=False)
 
     delivery_person = relationship("DeliveryPerson", back_populates="postal_code_area")

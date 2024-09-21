@@ -10,13 +10,13 @@ def main():
 
     try:
         # Example query: Adding a new customer
-        new_customer = Customer(Name="John Doe", Gender="M", Birthdate="1990-01-01", PhoneNumber="123456789", Address="123 Main St")
+        new_customer = Customer(name="John Doe", gender="M", birthdate="1990-01-01", phone_number="123456789", address="123 Main St")
         session.add(new_customer)
         session.commit()
 
-        added_customer = session.query(Customer).filter_by(Name="John Doe").first()
+        added_customer = session.query(Customer).filter_by(name="John Doe").first()
         if added_customer:
-            print(f"Customer found in database: ID = {added_customer.CustomerID}, Name = {added_customer.Name}")
+            print(f"Customer found in database: ID = {added_customer.customer_id}, Name = {added_customer.name}")
         else:
             print("Customer was not found in the database.")
 

@@ -3,40 +3,40 @@ from sqlalchemy.orm import relationship
 from .base import Base
 
 class Customer(Base):
-    __tablename__ = 'customer'
+    __tablename__ = 'customers'
 
-    CustomerID = Column(Integer, primary_key=True, autoincrement=True)
-    Name = Column(String(32), nullable=False)
-    Gender = Column(String(1), nullable=False)
-    Birthdate = Column(Date, nullable=False)
-    PhoneNumber = Column(String(15), nullable=False)
-    Address = Column(String(64))
+    customer_id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(32), nullable=False)
+    gender = Column(String(1), nullable=False)
+    birthdate = Column(Date, nullable=False)
+    phone_number = Column(String(15), nullable=False)
+    address = Column(String(64))
 
     accounts = relationship("CustomerAccount", back_populates="customer")
-    orders = relationship("Orders", back_populates="customer")
+    orders = relationship("Order", back_populates="customer")
 
 class CustomerAccount(Base):
-    __tablename__ = 'customer_account'
+    __tablename__ = 'customer_accounts'
 
-    CustomerAccountID = Column(Integer, primary_key=True, autoincrement=True)
-    CustomerID = Column(Integer, ForeignKey('customer.CustomerID'), nullable=False)
-    Username = Column(String(32), nullable=False, unique=True)
-    Password = Column(String(32), nullable=False)
-    PizzaCount = Column(Integer, nullable=False, default=0)
-    DiscountCodeID = Column(Integer, ForeignKey('discount_code.DiscountCodeID'), nullable=True)
-    FreeBirthdayPizza = Column(Boolean, nullable=False, default=False)
-    FreeBirthdayDrink = Column(Boolean, nullable=False, default=False)
+    customer_account_id = Column(Integer, primary_key=True, autoincrement=True)
+    customer_id = Column(Integer, ForeignKey('customers.customer_id'), nullable=False)
+    username = Column(String(32), nullable=False, unique=True)
+    password = Column(String(32), nullable=False)
+    pizza_count = Column(Integer, nullable=False, default=0)
+    discount_code_id = Column(Integer, ForeignKey('discount_codes.discount_code_id'), nullable=True)
+    free_birthday_pizza = Column(Boolean, nullable=False, default=False)
+    free_birthday_drink = Column(Boolean, nullable=False, default=False)
 
     customer = relationship("Customer", back_populates="accounts")
     discount_code = relationship("DiscountCode", back_populates="customer_accounts")
 
 class DiscountCode(Base):
-    __tablename__ = 'discount_code'
+    __tablename__ = 'discount_codes'
 
-    DiscountCodeID = Column(Integer, primary_key=True, autoincrement=True)
-    Code = Column(String(16), nullable=False, unique=True)
-    DiscountPercentage = Column(Float, nullable=False)
-    Used = Column(Boolean, nullable=False, default=False)
+    discount_code_id = Column(Integer, primary_key=True, autoincrement=True)
+    code = Column(String(16), nullable=False, unique=True)
+    discount_percentage = Column(Float, nullable=False)
+    used = Column(Boolean, nullable=False, default=False)
 
     customer_accounts = relationship("CustomerAccount", back_populates="discount_code")
 

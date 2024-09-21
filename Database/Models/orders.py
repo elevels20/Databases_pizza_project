@@ -2,15 +2,15 @@ from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from .base import Base
 
-class Orders(Base):
+class Order(Base):
     __tablename__ = 'orders'
 
-    OrderID = Column(Integer, primary_key=True, autoincrement=True)
-    CustomerID = Column(Integer, ForeignKey('customer.CustomerID'), nullable=False)
-    Status = Column(String(32), nullable=False)
-    OrderTime = Column(DateTime, nullable=False)
-    TotalPrice = Column(Float, nullable=False)
-    DeliveryTime = Column(DateTime, nullable=False)
+    order_id = Column(Integer, primary_key=True, autoincrement=True)
+    customer_id = Column(Integer, ForeignKey('customers.customer_id'), nullable=False)
+    status = Column(String(32), nullable=False)
+    order_time = Column(DateTime, nullable=False)
+    total_price = Column(Float, nullable=False)
+    delivery_time = Column(DateTime, nullable=False)
 
     customer = relationship("Customer", back_populates="orders")
     order_pizzas = relationship("OrderPizza", back_populates="order")
@@ -19,33 +19,33 @@ class Orders(Base):
     delivery_person = relationship("DeliveryPerson", back_populates="current_order")
 
 class OrderPizza(Base):
-    __tablename__ = 'order_pizza'
+    __tablename__ = 'order_pizzas'
 
-    PizzaID = Column(Integer, ForeignKey('pizza.PizzaID'), primary_key=True)
-    OrderID = Column(Integer, ForeignKey('orders.OrderID'), primary_key=True)
-    Quantity = Column(Integer, nullable=False)
+    pizza_id = Column(Integer, ForeignKey('pizzas.pizza_id'), primary_key=True)
+    order_id = Column(Integer, ForeignKey('orders.order_id'), primary_key=True)
+    quantity = Column(Integer, nullable=False)
 
     pizza = relationship("Pizza", back_populates="order_pizzas")
-    order = relationship("Orders", back_populates="order_pizzas")
+    order = relationship("Order", back_populates="order_pizzas")
 
 class OrderDrink(Base):
-    __tablename__ = 'order_drink'
+    __tablename__ = 'order_drinks'
 
-    DrinkID = Column(Integer, ForeignKey('drink.DrinkID'), primary_key=True)
-    OrderID = Column(Integer, ForeignKey('orders.OrderID'), primary_key=True)
-    Quantity = Column(Integer, nullable=False)
+    drink_id = Column(Integer, ForeignKey('drinks.drink_id'), primary_key=True)
+    order_id = Column(Integer, ForeignKey('orders.order_id'), primary_key=True)
+    quantity = Column(Integer, nullable=False)
 
     drink = relationship("Drink", back_populates="order_drinks")
-    order = relationship("Orders", back_populates="order_drinks")
+    order = relationship("Order", back_populates="order_drinks")
 
 class OrderDessert(Base):
-    __tablename__ = 'order_dessert'
+    __tablename__ = 'order_desserts'
 
-    DessertID = Column(Integer, ForeignKey('dessert.DessertID'), primary_key=True)
-    OrderID = Column(Integer, ForeignKey('orders.OrderID'), primary_key=True)
-    Quantity = Column(Integer, nullable=False)
+    dessert_id = Column(Integer, ForeignKey('desserts.dessert_id'), primary_key=True)
+    order_id = Column(Integer, ForeignKey('orders.order_id'), primary_key=True)
+    quantity = Column(Integer, nullable=False)
 
     dessert = relationship("Dessert", back_populates="order_desserts")
-    order = relationship("Orders", back_populates="order_desserts")
+    order = relationship("Order", back_populates="order_desserts")
 
 
