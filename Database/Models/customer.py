@@ -1,7 +1,5 @@
 from sqlalchemy import Column, Integer, String, Date, ForeignKey, Boolean, Float
 from sqlalchemy.orm import relationship
-#from ..db import Base
-#from Database.Models import Base
 from .base import Base
 
 class Customer(Base):

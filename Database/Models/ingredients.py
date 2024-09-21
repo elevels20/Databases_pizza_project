@@ -1,10 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import relationship
-#from ..db import Base
-#from Database.Models import Base
 from .base import Base
-
-from Database.db import Base
 
 class Ingredient(Base):
     __tablename__ = 'ingredient'

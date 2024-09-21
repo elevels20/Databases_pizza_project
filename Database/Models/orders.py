@@ -1,7 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-#from ..db import Base
-#from Database.Models import Base
 from .base import Base
 
 class Orders(Base):
@@ -28,7 +26,7 @@ class OrderPizza(Base):
     Quantity = Column(Integer, nullable=False)
 
     pizza = relationship("Pizza", back_populates="order_pizzas")
-    order = relationship("Order", back_populates="order_pizzas")
+    order = relationship("Orders", back_populates="order_pizzas")
 
 class OrderDrink(Base):
     __tablename__ = 'order_drink'
@@ -38,7 +36,7 @@ class OrderDrink(Base):
     Quantity = Column(Integer, nullable=False)
 
     drink = relationship("Drink", back_populates="order_drinks")
-    order = relationship("Order", back_populates="order_drinks")
+    order = relationship("Orders", back_populates="order_drinks")
 
 class OrderDessert(Base):
     __tablename__ = 'order_dessert'
@@ -48,6 +46,6 @@ class OrderDessert(Base):
     Quantity = Column(Integer, nullable=False)
 
     dessert = relationship("Dessert", back_populates="order_desserts")
-    order = relationship("Order", back_populates="order_desserts")
+    order = relationship("Orders", back_populates="order_desserts")
 
 
