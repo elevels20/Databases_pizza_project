@@ -23,7 +23,7 @@ except OperationalError as e:
 engine = create_engine(DATABASE_URL)
 #Base = declarative_base()
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, bind=engine)
 print("SessionLocal created")
 # call session.commit() to save changes to the database manually
 
