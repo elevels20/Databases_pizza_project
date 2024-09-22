@@ -6,12 +6,12 @@ from Database.Models.ingredients import Ingredient, PizzaIngredient
 from typing import List, Tuple
 
 # Initialize the database (create tables if not exists)
-init_db()
+#init_db()
 
 def add_calculatd_price(session: Session, pizza: Pizza) -> None:
     """
-    Calculates the price of a pizza, calculated based on the sum of its ingredient costs, a 40% profit margin, and the inclusion of a 9% VAT.
-    Adds calculated price to table.
+    Calculate the price of a pizza, calculated based on the sum of its ingredient costs, a 40% profit margin, and the inclusion of a 9% VAT.
+    Add calculated price to table.
     """
     try:
         # Calculate the cost of the ingredients
@@ -35,8 +35,8 @@ def add_calculatd_price(session: Session, pizza: Pizza) -> None:
 
 def add_diet(session: Session, pizza: Pizza):
     """
-    Determines if a pizza is vegan or vegetarian.
-    Adds this information to table.
+    Determine if a pizza is vegan or vegetarian.
+    Add this information to table.
     """
     try:
         if all(ingredient.ingredient.diet == "Vegan" for ingredient in pizza.pizza_ingredients):
@@ -53,7 +53,7 @@ def add_diet(session: Session, pizza: Pizza):
 
 def add_ingredients_to_pizza(session: Session, pizza: Pizza, ingredients: List[Tuple[Ingredient, int]]) -> None:
     """
-    Adds ingredients to a given pizza if they are not already associated.
+    Add ingredients to a given pizza if they are not already associated.
     """
     try:
         # Iterate through the list of ingredients
@@ -75,6 +75,7 @@ def add_ingredients_to_pizza(session: Session, pizza: Pizza, ingredients: List[T
                 print(f"Added {ingredient.name} to {pizza.name}")
             else:
                 print(f"{ingredient.name} already added to {pizza.name}")
+        session.commit()
 
     except Exception as e:
         print(f"Error adding ingredients to {pizza.name}: {e}")

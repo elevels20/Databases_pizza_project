@@ -9,7 +9,7 @@ init_db()
 
 def add_items_to_db(session, model, items):
     """
-    Adds a list of items to the database if they don't already exist.
+    Add a list of items to the database if they don't already exist.
     """
     try:
         # Iterate through the list of items
@@ -81,12 +81,12 @@ ingredients = [
 ]
 
 
-# Using a context manager to handle session lifecycle
 with SessionLocal() as session:
     add_items_to_db(session, Dessert, desserts)
     add_items_to_db(session, Drink, drinks)
     add_items_to_db(session, Pizza, pizzas)
     add_items_to_db(session, Ingredient, ingredients)
 
+# adding ingredients, prices and diets to pizzas
 subprocess.run(["python", "add_pizza_ingredients.py"])
 
