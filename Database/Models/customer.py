@@ -8,7 +8,7 @@ class Customer(Base):
     customer_id = Column(Integer, primary_key=True, autoincrement=True)
     first_name = Column(String(32), nullable=False)
     last_name = Column(String(32), nullable=False)
-    gender = Column(String(1), nullable=False)
+    gender = Column(String(1), nullable=False) # M/F
     birthdate = Column(Date, nullable=False)
     phone_number = Column(String(15), nullable=False)
     address = Column(String(64), nullable=False)
