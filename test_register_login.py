@@ -1,5 +1,4 @@
-from register import register
-from login import login
+from login import login, register
 from Database.db import SessionLocal
 from datetime import date
 
@@ -65,3 +64,4 @@ with SessionLocal() as session:
         username="secondcustomer",
         password="password2001"
     )
+    session.close()
