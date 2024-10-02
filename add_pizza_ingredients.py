@@ -134,7 +134,7 @@ with SessionLocal() as session:
 
     add_ingredients_to_pizza(session, pizzas['Veggie'], [
         (tomato_sauce, 1),
-        (mozzarella, 1),
+        #(mozzarella, 1),
         (bell_peppers, 1),
         (onions, 1),
         (mushrooms, 1),

@@ -7,7 +7,7 @@ class Order(Base):
 
     order_id = Column(Integer, primary_key=True, autoincrement=True)
     customer_id = Column(Integer, ForeignKey('customers.customer_id'), nullable=False)
-    status = Column(String(32), nullable=False) # Being prepared, In process, Out for delivery
+    status = Column(String(32), nullable=False) # Being prepared, In process, Out for delivery, Cancelled
     order_time = Column(DateTime, nullable=False)
     total_price = Column(Float, nullable=False)
     delivery_time = Column(DateTime, nullable=False)

@@ -5,7 +5,7 @@ from Database.Models.customer import CustomerAccount
 from Database.Models.orders import Order, OrderPizza, OrderDessert, OrderDrink
 from datetime import datetime, timedelta
 
-def place_order(session: Session, username: str, pizzas: List[Tuple[Pizza, int]], drinks: List[Tuple[Drink, int]] = None, desserts: List[Tuple[Dessert, int]] = None):
+def place_order(session: Session, username: str, pizzas: List[Tuple[Pizza, int]], drinks: List[Tuple[Drink, int]] = None, desserts: List[Tuple[Dessert, int]] = None) -> Order:
     """
     Place an order for pizzas, drinks and desserts. Each order must include at least one pizza. 
     """
@@ -30,7 +30,7 @@ def place_order(session: Session, username: str, pizzas: List[Tuple[Pizza, int]]
             for pizza, quantity in pizzas: 
                 total_price = total_price + pizza.price * quantity
                 session.add(OrderPizza(pizza=pizza, order=new_order, quantity=quantity))
-                order_customer_account.pizza_count += 1
+                order_customer_account.pizza_count += quantity
         
             if drinks is not None:
                 for drink, quantity in drinks:
@@ -48,5 +48,6 @@ def place_order(session: Session, username: str, pizzas: List[Tuple[Pizza, int]]
             session.commit()
             
             print(f"Order #{new_order.order_id} is being prepared.")
+            return new_order
         except Exception as e:
             print(f"Error placing order of {username}: {e}")
