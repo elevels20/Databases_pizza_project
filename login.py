@@ -18,14 +18,16 @@ def login(session: Session, username: str, password: str) -> bool:
             return False
     except Exception as e:
         print(f"Error logging in customer {username}: {e}")
+        return False
 
-def register(session: Session, username: str, password: str, first_name: str, last_name: str, gender: str, birthdate: date, phone_number: str, address: str) -> None:
+def register(session: Session, username: str, password: str, first_name: str, last_name: str, gender: str, birthdate: date, phone_number: str, address: str) -> bool:
     """
     Register a new customer and account to the database.
     """
     try:
         if session.query(exists().where(CustomerAccount.username == username)).scalar():
             print(f"Username {username} already exists.")
+            return False
         else :
             new_customer = Customer(
                 first_name = first_name, 
@@ -44,5 +46,7 @@ def register(session: Session, username: str, password: str, first_name: str, la
             session.add(new_customer_account)
             session.commit()
             print(f"Customer {first_name} {last_name} with username {username} registered.")
+            return True
     except Exception as e:
         print(f"Error registering customer {first_name} {last_name}: {e}")
+        return False
