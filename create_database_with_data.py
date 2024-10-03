@@ -88,5 +88,5 @@ with SessionLocal() as session:
     add_items_to_db(session, Ingredient, ingredients)
 
 # adding ingredients, prices and diets to pizzas
-subprocess.run(["python", "add_pizza_ingredients.py"])
+subprocess.run(["python3", "add_pizza_ingredients.py"])
 
