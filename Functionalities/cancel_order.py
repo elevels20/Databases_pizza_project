@@ -42,8 +42,28 @@ def cancel_order(session: Session, selected_order: Order, account: CustomerAccou
         confirmation = inquirer.prompt(questions)
 
         if not confirmation['confirm_cancel']:
-            return "Order cancellation aborted."
+            print("Order cancellation aborted.")
+            return
         
+        for order_pizza in selected_order.order_pizzas:
+            pizza_quantity = order_pizza.quantity 
+            account.total_pizza_count -= pizza_quantity
+
+        # Reset birthday offer if it was a present
+        if selected_order.birthday_order:
+            account.birthday_offer_used_year = None
+        else: 
+            # Update total_pizza_count and discount_pizza_count for customer
+            for order_pizza in selected_order.order_pizzas:
+                pizza_quantity = order_pizza.quantity 
+                account.discount_pizza_count -= pizza_quantity
+        
+        # Check in case counts got negative
+        if account.total_pizza_count < 0:
+            account.total_pizza_count = 0
+        if account.discount_pizza_count < 0:
+            account.discount_pizza_count = 0
+            
         # Cancel the order
         selected_order.status = "Cancelled"
         session.commit()

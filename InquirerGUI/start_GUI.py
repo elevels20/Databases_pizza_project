@@ -10,12 +10,13 @@ from Database.db import SessionLocal
 from InquirerGUI.login_page_inquirer import login_inquirer
 from Database.Models.menu import Pizza, Dessert, Drink
 from Database.Models.orders import Order
-from helper_functions_GUI import print_order_details, log_out
-from datetime import timedelta
+from helper_functions_GUI import print_order_details, log_out, select_free_birthday_drink, select_free_birthday_pizza
+from datetime import timedelta, date
 from Functionalities.place_order import place_order
 from Functionalities.cancel_order import cancel_order
 
 account = None
+birthday_offer_homepage = False
 
 def start_GUI(session: Session) -> None:
     """
@@ -25,7 +26,7 @@ def start_GUI(session: Session) -> None:
     global account 
     # Launch login screen and get account of customer
     account = PAGES["Login page"](session)
-
+    
     # Start homepage if logged in
     if account:
         return PAGES["To homepage"](session)
@@ -34,11 +35,25 @@ def homepage(session: Session):
     """
     Homepage for terminal GUI.
     """
+    global birthday_offer_homepage
     print("")
     print("HOMEPAGE")
     print(f"Hello {account.customer.first_name} {account.customer.last_name}, welcome to our pizza service!")
 
-    HOMEPAGE_CHOICES = ['View account', 'View menu', 'Place order', 'Order history', 'Log out']
+    # Check birthday
+    today = date.today()
+    birthdate = account.customer.birthdate
+    if birthdate is not None and birthdate.month == today.month and birthdate.day == today.day:
+        if account.birthday_offer_used_year != today.year:
+            birthday_offer_homepage = True
+        else:
+            birthday_offer_homepage = False
+    
+    if birthday_offer_homepage:
+        print("Happy birthday! You can get a free pizza and drink today!")
+        HOMEPAGE_CHOICES = ['GET BIRTHDAY PRESENT', 'View account', 'View menu', 'Place order', 'Order history', 'Log out']
+    else: 
+        HOMEPAGE_CHOICES = ['View account', 'View menu', 'Place order', 'Order history', 'Log out']
     questions = [
         inquirer.List('action', message="What would you like to do?", choices=HOMEPAGE_CHOICES)
     ]
@@ -56,7 +71,9 @@ def view_account(session: Session):
     print(f"Gender: {account.customer.gender}")
     print(f"Date of birth: {account.customer.birthdate.strftime("%Y-%m-%d")}")
     print(f"Address: {account.customer.address}")
-    print(f"Amount of previously ordered pizzas: {account.pizza_count}")
+    print(f"Amount of previously ordered pizzas: {account.total_pizza_count}")
+    if account.discount_pizza_count >= 10:
+        print("CONGRATULATIONS, you get a 10% discount on your next order!")
 
     questions = [
         inquirer.List('action', message="Go back", choices=['To homepage'])
@@ -70,6 +87,8 @@ def place_order_page(session: Session):
     Show order placement page.
     """
     print("ORDER PLACEMENT")
+    if account.discount_pizza_count >= 10:
+        print("CONGRATULATIONS, you get a 10% discount on your next order!")
 
     try: 
         # Get all pizzas, drinks, and desserts from the database
@@ -112,7 +131,16 @@ def place_order_page(session: Session):
         quantity_answer = inquirer.prompt(quantity_question)
         quantity = int(quantity_answer['quantity'])
 
-        selected_pizzas.append((selected_pizza, quantity))
+        # Check if pizza is already in selected_pizzas
+        found = False
+        for i, (pizza, existing_quantity) in enumerate(selected_pizzas):
+            if pizza.pizza_id == selected_pizza.pizza_id:
+                selected_pizzas[i] = (pizza, existing_quantity + quantity)  # Update quantity if already in list
+                found = True
+                break
+        
+        if not found:
+            selected_pizzas.append((selected_pizza, quantity))  # Add new pizza if not already in list
 
     # Select desserts (optional)
     dessert_choices = [(dessert.name, dessert) for dessert in desserts]
@@ -143,16 +171,25 @@ def place_order_page(session: Session):
         quantity_answer = inquirer.prompt(quantity_question)
         quantity = int(quantity_answer['quantity'])
 
-        selected_desserts.append((selected_dessert, quantity))
+        # Check if dessert is already in selected_desserts
+        found = False
+        for i, (dessert, existing_quantity) in enumerate(selected_desserts):
+            if dessert.dessert_id == selected_dessert.dessert_id:
+                selected_desserts[i] = (dessert, existing_quantity + quantity)  # Update quantity if already in list
+                found = True
+                break
+        
+        if not found:
+            selected_desserts.append((selected_dessert, quantity))  # Add new dessert if not already in list
 
     # Select drinks (optional)
     drink_choices = [(drink.name, drink) for drink in drinks]
-    drink_choices.extend([('Done selecting drinks', None), cancel_option])
+    drink_choices.extend([('Place order', None), cancel_option])
 
     selected_drinks = [] 
     while True:
         questions = [
-            inquirer.List('drink', message="Select a drink to order or 'Done' to finish", choices=[name for name, _ in drink_choices])
+            inquirer.List('drink', message="Select a drink to order or 'Place order' to finish", choices=[name for name, _ in drink_choices])
         ]
         answer = inquirer.prompt(questions)
 
@@ -161,7 +198,7 @@ def place_order_page(session: Session):
             PAGES['To homepage'](session)
             return 
 
-        if answer['drink'] == 'Done selecting drinks':
+        if answer['drink'] == 'Place order':
             break
 
         # Get the selected drink
@@ -174,7 +211,20 @@ def place_order_page(session: Session):
         quantity_answer = inquirer.prompt(quantity_question)
         quantity = int(quantity_answer['quantity'])
 
-        selected_drinks.append((selected_drink, quantity))
+        # Check if drink is already in selected_drinks
+        found = False
+        for i, (drink, existing_quantity) in enumerate(selected_drinks):
+            if drink.drink_id == selected_drink.drink_id:
+                selected_drinks[i] = (drink, existing_quantity + quantity)  # Update quantity if already in list
+                found = True
+                break
+        
+        if not found:
+            selected_drinks.append((selected_drink, quantity))  # Add new drink if not already in list
+
+    discount_applied = False
+    if account.discount_pizza_count >= 10:
+        discount_applied = True
 
     # Place the order
     new_order = place_order(session, account.username, selected_pizzas, selected_drinks, selected_desserts)
@@ -184,10 +234,18 @@ def place_order_page(session: Session):
     else:
         # Order confirmation
         print("ORDER CONFIRMED!\n")
-        print(f"Changed your mind? You can cancel you order within 5 minutes of placement, so until {new_order.order_time + timedelta(minutes=5)}")
+        if discount_applied:
+            price_without_discount = round(new_order.total_price / 0.9, 2)
+            print(f"Total price without discount: {price_without_discount}")
+            print(f"Total price after discount: {new_order.total_price}")
+            saved_amount = round(price_without_discount - new_order.total_price, 2)
+            print(f"You saved {saved_amount}!\n")
+        print(f"Changed your mind? You can cancel your order within 5 minutes of placement, so until {new_order.order_time + timedelta(minutes=5)}")
         print("To cancel your order, select your order on the 'ORDER HISTORY' page and click 'cancel'.\n")
         print_order_details(new_order)
-
+        if account.discount_pizza_count >= 10:
+            print("\nCONGRATULATIONS, you get a 10% discount on your next order!")
+        
     # Back to homepage
     questions = [
         inquirer.List('action', message="What would you like to do?", choices=['To homepage', 'Place order'])
@@ -230,6 +288,8 @@ def view_order_history(session: Session):
                 print("Order not found.")
                 return PAGES['Order history'](session)
             
+            if previous_order.birthday_order:
+                print("This order was a free birthday present")
             print_order_details(previous_order)
         except Exception as e:
             print(f"Error showing order information: {e}")
@@ -436,6 +496,31 @@ def view_desserts(session: Session):
             print("Returning to desserts")
             PAGES['View desserts'](session)
 
+def get_birthday_present(session: Session):
+    """
+    Offer customer a free pizza and drink on their birthday.
+    """
+    print("CHOOSE A FREE PIZZA AND DRINK FOR YOUR BIRTHDAY!")
+
+    birthday_pizza = select_free_birthday_pizza(session)
+    birthday_drink = select_free_birthday_drink(session)
+
+    # Place the order
+    new_order = place_order(session, account.username, pizzas=[(birthday_pizza, 1)], drinks=[(birthday_drink, 1)], birthday_offer=True)
+
+    # Order confirmation
+    print("ORDER PRESENT CONFIRMED!\n")
+    print(f"Changed your mind? You can cancel your present within 5 minutes of placement, so until {new_order.order_time + timedelta(minutes=5)}")
+    print("To cancel your present, select your present on the 'ORDER HISTORY' page and click 'cancel'.\n")
+    print_order_details(new_order)
+
+    # Back to homepage
+    questions = [
+        inquirer.List('action', message="What would you like to do?", choices=['To homepage'])
+    ]
+    answers = inquirer.prompt(questions)
+    return PAGES[answers['action']](session)
+
 PAGES = {
     "Login page": login_inquirer,
     "View menu": menu,
@@ -447,7 +532,8 @@ PAGES = {
     "Order history": view_order_history,
     "To homepage": homepage,
     "Log out": log_out,
-    "Cancel order": cancel_order
+    "Cancel order": cancel_order,
+    'GET BIRTHDAY PRESENT': get_birthday_present
 }
 
 with SessionLocal() as session:
