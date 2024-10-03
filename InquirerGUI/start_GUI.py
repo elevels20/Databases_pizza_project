@@ -326,6 +326,7 @@ def view_order_history(session: Session):
             return PAGES['Order history'](session)
         elif answers['action'] == 'Cancel order':
             PAGES['Cancel order'](session, previous_order, account)
+            return PAGES['To homepage'](session)
 
 
 def menu(session: Session):
@@ -517,7 +518,7 @@ def get_birthday_present(session: Session):
     print("ORDER PRESENT CONFIRMED!\n")
     print(f"Changed your mind? You can cancel your present within 5 minutes of placement, so until {new_order.order_time + timedelta(minutes=5)}")
     print("To cancel your present, select your present on the 'ORDER HISTORY' page and click 'cancel'.\n")
-    print_order_details(new_order)
+    print_order_details(session, new_order.order_id)
 
     # Back to homepage
     questions = [
