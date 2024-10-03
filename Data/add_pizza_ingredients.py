@@ -1,6 +1,11 @@
-from Database.db import SessionLocal, init_db
+import sys
+import os
+
+# Add the parent directory to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from Database.db import SessionLocal
 from sqlalchemy.orm import Session
-from sqlalchemy import exists
 from Database.Models.menu import Pizza
 from Database.Models.ingredients import Ingredient, PizzaIngredient
 from typing import List, Tuple

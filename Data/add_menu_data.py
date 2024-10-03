@@ -1,11 +1,20 @@
-from Database.db import SessionLocal, init_db
+import sys
+import os
+
+# Add the parent directory to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import sys
+import os
+
+from Database.db import SessionLocal
 from sqlalchemy import exists
 from Database.Models.menu import Dessert, Drink, Pizza
 from Database.Models.ingredients import Ingredient
-import subprocess
+# import subprocess
 
- # Initialize the database (create tables if not exists)
-init_db()
+# Initialize the database (create tables if not exists)
+#init_db()
 
 def add_items_to_db(session, model, items):
     """
@@ -88,5 +97,5 @@ with SessionLocal() as session:
     add_items_to_db(session, Ingredient, ingredients)
 
 # adding ingredients, prices and diets to pizzas
-subprocess.run(["python3", "add_pizza_ingredients.py"])
+# subprocess.run(["python3", "add_pizza_ingredients.py"])
 

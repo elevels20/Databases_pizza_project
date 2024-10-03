@@ -1,4 +1,10 @@
-from login import login, register
+import sys
+import os
+
+# Add the parent directory to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from Functionalities.login import login, register
 from Database.db import SessionLocal
 from datetime import date
 
