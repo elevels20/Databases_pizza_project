@@ -7,12 +7,13 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import inquirer
 from sqlalchemy.orm import Session
 from Database.db import SessionLocal
-from login_inquirer import login_inquirer
+from InquirerGUI.login_page_inquirer import login_inquirer
 from Database.Models.menu import Pizza, Dessert, Drink
 from Database.Models.orders import Order
-from helper_functions_GUI import print_order_details, log_out, cancel_order
+from helper_functions_GUI import print_order_details, log_out
 from datetime import timedelta
-from place_order import place_order
+from Functionalities.place_order import place_order
+from Functionalities.cancel_order import cancel_order
 
 account = None
 

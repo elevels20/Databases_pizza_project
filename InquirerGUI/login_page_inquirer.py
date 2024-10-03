@@ -5,7 +5,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import inquirer
-from login import login, register
+from Functionalities.login import login, register
 from Database.db import SessionLocal
 from datetime import datetime
 from sqlalchemy.orm import Session

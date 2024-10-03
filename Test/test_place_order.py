@@ -4,11 +4,11 @@ import os
 # Add the parent directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from login import login, register
+from Functionalities.login import login, register
 from Database.db import SessionLocal
 from datetime import date
 from Database.Models.menu import Pizza, Drink, Dessert
-from place_order import place_order
+from Functionalities.place_order import place_order
 
 # Create a customer account
 with SessionLocal() as session:
