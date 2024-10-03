@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from .base import Base
 
@@ -11,6 +11,7 @@ class Order(Base):
     order_time = Column(DateTime, nullable=False)
     total_price = Column(Float, nullable=False)
     delivery_time = Column(DateTime, nullable=False)
+    birthday_order = Column(Boolean, default=False)
     delivery_person_id = Column(Integer, ForeignKey('delivery_persons.delivery_person_id'), nullable=True)
 
     customer = relationship("Customer", back_populates="orders")

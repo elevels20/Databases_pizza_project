@@ -24,10 +24,12 @@ class CustomerAccount(Base):
     customer_id = Column(Integer, ForeignKey('customers.customer_id'), nullable=False)
     username = Column(String(32), nullable=False, unique=True)
     password = Column(String(32), nullable=False)
-    pizza_count = Column(Integer, nullable=False, default=0)
+    total_pizza_count = Column(Integer, nullable=False, default=0) # Total number of pizzas ordered
+    discount_pizza_count = Column(Integer, nullable=False, default=0) # Tracks every 10 pizzas for discount
     discount_code_id = Column(Integer, ForeignKey('discount_codes.discount_code_id'), nullable=True)
-    free_birthday_pizza = Column(Boolean, nullable=False, default=False)
-    free_birthday_drink = Column(Boolean, nullable=False, default=False)
+    birthday_offer_used_year = Column(Integer, nullable=True, default = None)  # Track last year the offer was used
+    #free_birthday_pizza = Column(Boolean, nullable=False, default=False)
+    #free_birthday_drink = Column(Boolean, nullable=False, default=False)
 
     customer = relationship("Customer", back_populates="accounts")
     discount_code = relationship("DiscountCode", back_populates="customer_accounts")
