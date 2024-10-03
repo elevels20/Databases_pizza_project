@@ -7,17 +7,17 @@ class Order(Base):
 
     order_id = Column(Integer, primary_key=True, autoincrement=True)
     customer_id = Column(Integer, ForeignKey('customers.customer_id'), nullable=False)
-    status = Column(String(32), nullable=False) # Being prepared, In process, Out for delivery, Cancelled
+    status = Column(String(32), nullable=False)  # Being prepared, In process, Out for delivery, Cancelled
     order_time = Column(DateTime, nullable=False)
     total_price = Column(Float, nullable=False)
     delivery_time = Column(DateTime, nullable=False)
-    # maybe add: delivery_person_id = Column(Integer, ForeignKey('delivery_persons.delivery_person_id'), nullable=False)
+    delivery_person_id = Column(Integer, ForeignKey('delivery_persons.delivery_person_id'), nullable=True)
 
     customer = relationship("Customer", back_populates="orders")
     order_pizzas = relationship("OrderPizza", back_populates="order")
     order_drinks = relationship("OrderDrink", back_populates="order")
     order_desserts = relationship("OrderDessert", back_populates="order")
-    delivery_person = relationship("DeliveryPerson", back_populates="current_order")
+    delivery_person = relationship("DeliveryPerson", foreign_keys=[delivery_person_id], back_populates="orders")
 
 class OrderPizza(Base):
     __tablename__ = 'order_pizzas'

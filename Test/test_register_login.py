@@ -20,7 +20,8 @@ with SessionLocal() as session:
         gender="M",
         birthdate=date(2000, 6, 13),
         phone_number="123-456-7890",
-        address="Grote Looiersstraat 17, 6211 JH Maastricht"
+        address="Grote Looiersstraat 17, 6211 JH Maastricht",
+        postal_code="11111"
     )
 
     # Register a second customer
@@ -33,7 +34,8 @@ with SessionLocal() as session:
         gender="F",
         birthdate=date(1979, 2, 21),
         phone_number="987-653-321",
-        address="Paul-Henri Spaaklaan 1, 6229 EN Maastricht"
+        address="Paul-Henri Spaaklaan 1, 6229 EN Maastricht",
+        postal_code="22222"
     )
 
     # Should print "Invalid username or password."

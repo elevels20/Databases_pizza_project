@@ -12,6 +12,7 @@ class Customer(Base):
     birthdate = Column(Date, nullable=False)
     phone_number = Column(String(15), nullable=False)
     address = Column(String(64), nullable=False)
+    postal_code = Column(String(5), nullable=False)
 
     accounts = relationship("CustomerAccount", back_populates="customer")
     orders = relationship("Order", back_populates="customer")

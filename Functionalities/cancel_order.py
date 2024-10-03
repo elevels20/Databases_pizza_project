@@ -9,6 +9,7 @@ from Database.Models.orders import Order
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from Database.Models.customer import CustomerAccount
+from Database.Models.delivery import DeliveryPerson
 
 def cancel_order(session: Session, selected_order: Order, account: CustomerAccount):
     """
@@ -23,7 +24,7 @@ def cancel_order(session: Session, selected_order: Order, account: CustomerAccou
         if selected_order.customer_id != account.customer_id:
             print("You are not authorized to cancel this order.")
             return
-        
+
         # Check if order has already been cancelled
         if selected_order.status == 'Cancelled':
             print("Order has already been cancelled.")
@@ -34,7 +35,7 @@ def cancel_order(session: Session, selected_order: Order, account: CustomerAccou
         if current_time > selected_order.order_time + timedelta(minutes=5):
             print("Cancellation period has expired. You cannot cancel this order.")
             return
-        
+
         # Ask for confirmation to cancel the order
         questions = [
             inquirer.Confirm('confirm_cancel', message=f"Are you sure you want to cancel order {selected_order.order_id}?")
@@ -43,15 +44,23 @@ def cancel_order(session: Session, selected_order: Order, account: CustomerAccou
 
         if not confirmation['confirm_cancel']:
             return "Order cancellation aborted."
-        
+
         # Cancel the order
         selected_order.status = "Cancelled"
+
+        # If a delivery person is assigned, make them available again
+        if selected_order.delivery_person:
+            delivery_person = selected_order.delivery_person
+            delivery_person.availability = True
+            delivery_person.unavailable_until = None  # Reset their unavailability timestamp if you have one
+            print(f"Delivery person {delivery_person.first_name} {delivery_person.last_name} is now available again.")
+
         session.commit()
 
         print(f"Order {selected_order.order_id} has been successfully cancelled.")
         return
 
     except Exception as e:
-        session.rollback() 
+        session.rollback()
         print(f"An error occurred while canceling the order: {e}")
         return

@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Add the parent directory to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from Database.db import SessionLocal
 from Database.Models.customer import CustomerAccount, Customer
 from sqlalchemy import exists
@@ -20,7 +26,7 @@ def login(session: Session, username: str, password: str) -> bool:
         print(f"Error logging in customer {username}: {e}")
         return False
 
-def register(session: Session, username: str, password: str, first_name: str, last_name: str, gender: str, birthdate: date, phone_number: str, address: str) -> bool:
+def register(session: Session, username: str, password: str, first_name: str, last_name: str, gender: str, birthdate: date, phone_number: str, address: str, postal_code: str) -> bool:
     """
     Register a new customer and account to the database.
     """
@@ -30,13 +36,14 @@ def register(session: Session, username: str, password: str, first_name: str, la
             return False
         else :
             new_customer = Customer(
-                first_name = first_name, 
+                first_name = first_name,
                 last_name = last_name,
                 gender = gender,
                 birthdate = birthdate,
                 phone_number = phone_number,
-                address =address
-                )
+                address =address,
+                postal_code =postal_code
+            )
             new_customer_account = CustomerAccount(
                 username = username,
                 password = password,
