@@ -56,7 +56,8 @@ def login_inquirer(session: Session) -> CustomerAccount:
             inquirer.List('gender', message="What is your gender?", choices=['M', 'F']),
             inquirer.Text('birthdate', message="What is date of birth? (YYYY-MM-DD)"),
             inquirer.Text('phone_number', message="What is your phone number?"),
-            inquirer.Text('address', message="What is your address?")
+            inquirer.Text('address', message="What is your address?"),
+            inquirer.Text('postal_code', message="What's your postal code")
         ]
 
         answers = inquirer.prompt(questions)
@@ -73,7 +74,9 @@ def login_inquirer(session: Session) -> CustomerAccount:
                 gender = answers['gender'],
                 birthdate = datetime.strptime(answers['birthdate'], '%Y-%m-%d').date(),
                 phone_number = answers['phone_number'],
-                address = answers['address']
+                address = answers['address'],
+                postal_code= answers['postal_code']
+
             )
         
             account = session.query(CustomerAccount).filter(CustomerAccount.username == username, CustomerAccount.password == password).first()

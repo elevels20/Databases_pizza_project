@@ -5,6 +5,10 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import inquirer
+import threading
+import time
+from Functionalities.update_status import update_order_status
+from Functionalities.status_update_loop import run_status_update_loop
 from sqlalchemy.orm import Session
 from Database.db import SessionLocal
 from InquirerGUI.login_page_inquirer import login_inquirer
@@ -23,13 +27,18 @@ def start_GUI(session: Session) -> None:
     Start/launch terminal GUI.
     """
 
-    global account 
+    global account
     # Launch login screen and get account of customer
     account = PAGES["Login page"](session)
     
     # Start homepage if logged in
     if account:
         return PAGES["To homepage"](session)
+
+    # Start the background thread for updating order statuses
+update_thread = threading.Thread(target=run_status_update_loop, daemon=True)
+update_thread.start()
+
 
 def homepage(session: Session):
     """
@@ -71,9 +80,11 @@ def view_account(session: Session):
     print(f"Gender: {account.customer.gender}")
     print(f"Date of birth: {account.customer.birthdate.strftime("%Y-%m-%d")}")
     print(f"Address: {account.customer.address}")
+    print(f"Postal Code {account.customer.postal_code}")
     print(f"Amount of previously ordered pizzas: {account.total_pizza_count}")
     if account.discount_pizza_count >= 10:
         print("CONGRATULATIONS, you get a 10% discount on your next order!")
+
 
     questions = [
         inquirer.List('action', message="Go back", choices=['To homepage'])
@@ -90,23 +101,23 @@ def place_order_page(session: Session):
     if account.discount_pizza_count >= 10:
         print("CONGRATULATIONS, you get a 10% discount on your next order!")
 
-    try: 
+    try:
         # Get all pizzas, drinks, and desserts from the database
         pizzas = session.query(Pizza).all()
         drinks = session.query(Drink).all()
         desserts = session.query(Dessert).all()
     except Exception as e:
         print(f"Error loading pizzas, drinks and desserts: {e}")
-        return 
+        return
 
     # Option to cancel the order
     cancel_option = ('Cancel order', None)
-    
+
     # Select pizzas
     pizza_choices = [(pizza.name, pizza) for pizza in pizzas]
-    pizza_choices.extend([('Done selecting pizzas', None), cancel_option]) 
+    pizza_choices.extend([('Done selecting pizzas', None), cancel_option])
 
-    selected_pizzas = [] 
+    selected_pizzas = []
     while True:
         questions = [
             inquirer.List('pizza', message="Select at least one pizza to order or 'Done' to finish", choices=[name for name, _ in pizza_choices])
@@ -116,14 +127,14 @@ def place_order_page(session: Session):
         if answer['pizza'] == 'Cancel order':
             print("ORDER CANCELLED")
             PAGES['To homepage'](session)
-            return 
-        
+            return
+
         if answer['pizza'] == 'Done selecting pizzas':
             break
 
         # Get the selected pizza
         selected_pizza = next(pizza for name, pizza in pizza_choices if name == answer['pizza'])
-        
+
         # Ask for the quantity of the selected pizza
         quantity_question = [
             inquirer.Text('quantity', message=f'How many of pizza {selected_pizza.name} would you like to order?', default='1')
@@ -146,7 +157,7 @@ def place_order_page(session: Session):
     dessert_choices = [(dessert.name, dessert) for dessert in desserts]
     dessert_choices.extend([('Done selecting desserts', None), cancel_option])
 
-    selected_desserts = [] 
+    selected_desserts = []
     while True:
         questions = [
             inquirer.List('dessert', message="Select a dessert to order or 'Done' to finish", choices=[name for name, _ in dessert_choices])
@@ -156,14 +167,14 @@ def place_order_page(session: Session):
         if answer['dessert'] == 'Cancel order':
             print("ORDER CANCELLED")
             PAGES['To homepage'](session)
-            return 
-        
+            return
+
         if answer['dessert'] == 'Done selecting desserts':
             break
 
         # Get the selected dessert
         selected_dessert = next(dessert for name, dessert in dessert_choices if name == answer['dessert'])
-        
+
         # Ask for the quantity of the selected dessert
         quantity_question = [
             inquirer.Text('quantity', message=f'How many of {selected_dessert.name} would you like to order?', default='1')
@@ -186,7 +197,7 @@ def place_order_page(session: Session):
     drink_choices = [(drink.name, drink) for drink in drinks]
     drink_choices.extend([('Place order', None), cancel_option])
 
-    selected_drinks = [] 
+    selected_drinks = []
     while True:
         questions = [
             inquirer.List('drink', message="Select a drink to order or 'Place order' to finish", choices=[name for name, _ in drink_choices])
@@ -196,14 +207,14 @@ def place_order_page(session: Session):
         if answer['drink'] == 'Cancel order':
             print("ORDER CANCELLED")
             PAGES['To homepage'](session)
-            return 
+            return
 
         if answer['drink'] == 'Place order':
             break
 
         # Get the selected drink
         selected_drink = next(drink for name, drink in drink_choices if name == answer['drink'])
-        
+
         # Ask for the quantity of the selected drink
         quantity_question = [
             inquirer.Text('quantity', message=f'How many of {selected_drink.name} would you like to order?', default='1')
@@ -230,7 +241,7 @@ def place_order_page(session: Session):
     new_order = place_order(session, account.username, selected_pizzas, selected_drinks, selected_desserts)
 
     if not new_order:
-        print("ORDER CANCELLED") 
+        print("ORDER CANCELLED")
     else:
         # Order confirmation
         print("ORDER CONFIRMED!\n")
@@ -242,7 +253,8 @@ def place_order_page(session: Session):
             print(f"You saved {saved_amount}!\n")
         print(f"Changed your mind? You can cancel your order within 5 minutes of placement, so until {new_order.order_time + timedelta(minutes=5)}")
         print("To cancel your order, select your order on the 'ORDER HISTORY' page and click 'cancel'.\n")
-        print_order_details(new_order)
+
+        print_order_details(session, new_order.order_id)
         if account.discount_pizza_count >= 10:
             print("\nCONGRATULATIONS, you get a 10% discount on your next order!")
         
@@ -258,16 +270,21 @@ def view_order_history(session: Session):
     Show previous orders of customer, including cancellation option for last order if it is within 5 minutes of placing it.
     """
     print("ORDER HISTORY")
-    try: 
+    try:
         # Get a list of previous order IDs for the logged-in customer
         previous_orders = session.query(Order).filter(Order.customer_id == account.customer_id).order_by(Order.order_id.desc()).all()
-        
+
         if not previous_orders:
             print("You have no previous orders.")
             return PAGES['To homepage'](session)
-        
+
+        # Update the status for all orders
+        for order in previous_orders:
+            update_order_status(session, order.order_id)  # Update each order's status before displaying
+
         previous_ids = [p_order.order_id for p_order in previous_orders]
         previous_ids.append('To homepage')
+
     except Exception as e:
         print(f"Error loading previous order IDs: {e}")
         return PAGES['To homepage'](session)
@@ -290,7 +307,7 @@ def view_order_history(session: Session):
             
             if previous_order.birthday_order:
                 print("This order was a free birthday present")
-            print_order_details(previous_order)
+            print_order_details(session, previous_order.order_id)
         except Exception as e:
             print(f"Error showing order information: {e}")
             return PAGES['Order history'](session)
@@ -300,7 +317,7 @@ def view_order_history(session: Session):
         ]
 
         answers = inquirer.prompt(questions)
- 
+
         if answers['action'] == "To homepage":
             print("Returning to homepage")
             return PAGES['To homepage'](session)
@@ -310,18 +327,6 @@ def view_order_history(session: Session):
         elif answers['action'] == 'Cancel order':
             PAGES['Cancel order'](session, previous_order, account)
 
-        questions = [
-            inquirer.List('action', message='What do you want to do', choices=['To homepage', 'Order history'])
-        ]
-
-        answers = inquirer.prompt(questions)
-
-        if answers['action'] == "To homepage":
-            print("Returning to homepage")
-            return PAGES['To homepage'](session)
-        elif answers['action'] == 'Order history':
-            print("Returning to order history")
-            return PAGES['Order history'](session)
 
 def menu(session: Session):
     """
@@ -332,7 +337,7 @@ def menu(session: Session):
     questions = [
         inquirer.List('action', message="What would you like to do?", choices=MENU_ACTIONS)
     ]
-    
+
     answers = inquirer.prompt(questions)
     return PAGES[answers['action']](session)
 
@@ -341,7 +346,7 @@ def view_pizzas(session: Session):
     Show list of pizzas. Select pizza to see price, ingredients and diet.
     """
     print("PIZZAS")
-    try: 
+    try:
         # Get a list of all pizza names
         pizza_names = [row.name for row in session.query(Pizza.name).all()]
         pizza_names.append('Return to menu')
@@ -363,7 +368,7 @@ def view_pizzas(session: Session):
         print("Returning to homepage")
         return PAGES['To homepage'](session)
     else:
-        try: 
+        try:
             # Print pizza information
             selected_pizza = session.query(Pizza).filter(Pizza.name == answers['pizzas']).first()
             print("Pizza " + selected_pizza.name + ":")
@@ -375,7 +380,7 @@ def view_pizzas(session: Session):
         except Exception as e:
             print(f"Error showing pizza information: {e}")
             return
-        
+
         questions = [
             inquirer.List('turn back', message='Do you want to return to menu or see a different pizza?', choices=['Return to menu', 'To homepage', 'View pizzas'])
         ]
@@ -397,7 +402,7 @@ def view_drinks(session: Session):
     Show list of drinks. Select drink to see price.
     """
     print("DRINKS")
-    try: 
+    try:
         # Get a list of all drink names
         drink_names = [row.name for row in session.query(Drink.name).all()]
         drink_names.append('Return to menu')
@@ -419,7 +424,7 @@ def view_drinks(session: Session):
         print("Returning to homepage")
         return PAGES['To homepage'](session)
     else:
-        try: 
+        try:
             # Print drink information
             selected_drink = session.query(Drink).filter(Drink.name == answers['drinks']).first()
             print("Drink " + selected_drink.name + ":")
@@ -427,7 +432,7 @@ def view_drinks(session: Session):
         except Exception as e:
             print(f"Error showing drink information: {e}")
             return
-        
+
         questions = [
             inquirer.List('turn back', message='Do you want to return to menu or see a different drink?', choices=['Return to menu', 'To homepage', 'View drinks'])
         ]
@@ -449,7 +454,7 @@ def view_desserts(session: Session):
     Show list of desserts. Select dessert to see price and diet.
     """
     print("DESSERTS")
-    try: 
+    try:
         # Get a list of all dessert names
         dessert_names = [row.name for row in session.query(Dessert.name).all()]
         dessert_names.append('Return to menu')
@@ -470,7 +475,7 @@ def view_desserts(session: Session):
         print("Returning to homepage")
         PAGES['To homepage'](session)
     else:
-        try: 
+        try:
             # Print drink information
             selected_dessert = session.query(Dessert).filter(Dessert.name == answers['desserts']).first()
             print("Dessert " + selected_dessert.name + ":")
@@ -479,7 +484,7 @@ def view_desserts(session: Session):
                 print("    Diet: " + selected_dessert.diet)
         except Exception as e:
             print(f"Error showing dessert information: {e}")
-        
+
         questions = [
             inquirer.List('turn back', message='Do you want to return to menu or see a different dessert?', choices=['Return to menu', 'To homepage', 'View desserts'])
         ]

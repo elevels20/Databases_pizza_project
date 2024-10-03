@@ -7,38 +7,34 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import sys
 import os
 
-from Database.db import SessionLocal
+from Database.db import SessionLocal, init_db
 from sqlalchemy import exists
 from Database.Models.menu import Dessert, Drink, Pizza
 from Database.Models.ingredients import Ingredient
-# import subprocess
+from Database.Models.delivery import DeliveryPerson, PostalCodeArea
+import subprocess
 
 # Initialize the database (create tables if not exists)
-#init_db()
+init_db()
 
 def add_items_to_db(session, model, items):
     """
     Add a list of items to the database if they don't already exist.
     """
     try:
-        # Iterate through the list of items
+        # Just try to add each item and commit
         for item in items:
-            # Check if the item already exists based on the name
-            item_exists = session.query(exists().where(model.name == item.name)).scalar()
-
-            if not item_exists:
-                session.add(item)
-            else:
-                print(f"{item.name} already exists in the database.")
+            session.add(item)
 
         session.commit()  # Commit once after processing all items
-        print(f"{model.__name__} addition process completed!")
+        print(f"{model.__name__} items added to the database!")
 
     except Exception as e:
         session.rollback()  # Rollback if any error occurs
         print(f"Error adding {model.__name__}: {e}")
     finally:
         session.close()
+
 
 desserts = [
     Dessert(name='Ice Cream', price=4.0, diet="Vegetarian"),
@@ -88,6 +84,27 @@ ingredients = [
     Ingredient(name='Olive Oil', price=0.5, diet='Vegan'),
     Ingredient(name='Garlic', price=0.5, diet='Vegan')
 ]
+postal_code_areas = [
+    PostalCodeArea(postal_code='11111', city='Maastricht', delivery_person_count=2),
+    PostalCodeArea(postal_code='22222', city='Amsterdam', delivery_person_count=2),
+    PostalCodeArea(postal_code='33333', city='Eindhoven', delivery_person_count=2),
+    PostalCodeArea(postal_code='44444', city='Rotterdam', delivery_person_count=2),
+    PostalCodeArea(postal_code='55555', city='Utrecht', delivery_person_count=2)
+]
+
+# Manually add delivery personnel
+delivery_persons = [
+    DeliveryPerson(first_name='John', last_name='Doe', postal_code_area_id=1),
+    DeliveryPerson(first_name='Jane', last_name='Smith', postal_code_area_id=1),
+    DeliveryPerson(first_name='Mike', last_name='Johnson', postal_code_area_id=2),
+    DeliveryPerson(first_name='Sara', last_name='Brown', postal_code_area_id=2),
+    DeliveryPerson(first_name='Tom', last_name='Clark', postal_code_area_id=3),
+    DeliveryPerson(first_name='Emily', last_name='White', postal_code_area_id=3),
+    DeliveryPerson(first_name='Alex', last_name='Taylor', postal_code_area_id=4),
+    DeliveryPerson(first_name='Sophia', last_name='Lewis', postal_code_area_id=4),
+    DeliveryPerson(first_name='Chris', last_name='Walker', postal_code_area_id=5),
+    DeliveryPerson(first_name='Anna', last_name='Hall', postal_code_area_id=5)
+]
 
 
 with SessionLocal() as session:
@@ -95,6 +112,8 @@ with SessionLocal() as session:
     add_items_to_db(session, Drink, drinks)
     add_items_to_db(session, Pizza, pizzas)
     add_items_to_db(session, Ingredient, ingredients)
+    add_items_to_db(session, PostalCodeArea, postal_code_areas)
+    add_items_to_db(session, DeliveryPerson, delivery_persons)
 
 # adding ingredients, prices and diets to pizzas
 # subprocess.run(["python3", "add_pizza_ingredients.py"])
