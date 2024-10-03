@@ -53,8 +53,8 @@ def place_order(session: Session, username: str, pizzas: List[Tuple[Pizza, int]]
         for pizza, quantity in pizzas: 
             total_price = total_price + pizza.price * quantity
             session.add(OrderPizza(pizza=pizza, order=new_order, quantity=quantity))
-            order_customer_account.total_pizza_count += quantity
             if not birthday_offer:
+                order_customer_account.total_pizza_count += quantity
                 order_customer_account.discount_pizza_count += quantity
 
         # Add drinks to the order if any
