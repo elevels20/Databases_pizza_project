@@ -28,7 +28,7 @@ def place_order(session: Session, username: str, pizzas: List[Tuple[Pizza, int]]
             print(f"Customer account for username '{username}' not found.")
             return
 
-        # Access the postal code through the related Customer object
+
         customer_postal_code = order_customer_account.customer.postal_code
 
         total_price = 0
@@ -98,54 +98,47 @@ def place_order(session: Session, username: str, pizzas: List[Tuple[Pizza, int]]
 
 def assign_delivery_person(session: Session, order: Order):
     postal_code = order.customer.postal_code
+    three_minutes_ago = datetime.now() - timedelta(minutes=3)
 
-    delivery_person = session.query(DeliveryPerson).join(PostalCodeArea).filter(
-        PostalCodeArea.postal_code == postal_code,
-        DeliveryPerson.availability == True
-    ).first()
-
-    if delivery_person:
-        delivery_person.current_order_id = order.order_id
-        delivery_person.availability = False
-        order.delivery_person = delivery_person
-        print(f"Delivery person {delivery_person.first_name} {delivery_person.last_name} assigned to order #{order.order_id}.")
-    else:
-
-        print(f"No available delivery person for postal code {postal_code}.")
-        order.status = "Waiting for delivery"
-
-    session.commit()
-
-
-def group_orders_for_delivery(session: Session, new_order: Order):
-    """
-    Group orders for delivery based on postal code within a 3-minute window and a maximum batch of 3 pizzas.
-    """
-    postal_code = new_order.customer.postal_code
-    three_minutes_ago = new_order.order_time - timedelta(minutes=3)
-
-    grouped_orders = session.query(Order).join(Order.customer).filter(
-        Order.customer.has(postal_code=postal_code),  # Use correct postal code filter
-        Order.status == "Being prepared",
+    # Find recent orders within the same postal code and within 3 minutes
+    recent_orders = session.query(Order).filter(
+        Order.customer.has(postal_code=postal_code),
         Order.order_time >= three_minutes_ago,
-        Order.order_id != new_order.order_id
+        Order.delivery_person_id.isnot(None)
     ).all()
 
+    # Try to group the new order with existing orders if they can be grouped
     total_pizzas = sum(
-        session.query(OrderPizza).filter(OrderPizza.order_id == order.order_id).count()
-        for order in grouped_orders
+        session.query(OrderPizza).filter(OrderPizza.order_id == o.order_id).count() for o in recent_orders
     )
-    total_pizzas += session.query(OrderPizza).filter(OrderPizza.order_id == new_order.order_id).count()
+    new_order_pizza_count = session.query(OrderPizza).filter(OrderPizza.order_id == order.order_id).count()
 
-    if total_pizzas > 3:
-        print(f"Cannot group orders. Total pizzas exceed the limit of 3.")
-        return
+    if total_pizzas + new_order_pizza_count <= 3:
+        # Assign the new order to the same delivery person handling recent orders
+        if recent_orders:
+            delivery_person = session.query(DeliveryPerson).filter(
+                DeliveryPerson.delivery_person_id == recent_orders[0].delivery_person_id
+            ).first()
+            order.delivery_person_id = delivery_person.delivery_person_id
+            print(f"Grouped with existing delivery: Delivery person {delivery_person.first_name} {delivery_person.last_name} handling Order #{order.order_id}")
+        else:
+            print("No recent orders to group. Assigning new delivery person.")
 
-    print(f"Orders #{', '.join([str(order.order_id) for order in grouped_orders])} will be grouped with Order #{new_order.order_id} for delivery.")
-    new_order.status = "Grouped for delivery"
+    # If no groupable orders are found or the pizza count exceeds 3, assign a new delivery person
+    if not order.delivery_person_id:
+        available_delivery_person = session.query(DeliveryPerson).join(PostalCodeArea).filter(
+            PostalCodeArea.postal_code == postal_code,
+            DeliveryPerson.availability == True
+        ).first()
 
-    for order in grouped_orders:
-        order.status = "Grouped for delivery"
+        if available_delivery_person:
+            available_delivery_person.current_order_id = order.order_id
+            available_delivery_person.availability = False
+            order.delivery_person = available_delivery_person
+            print(f"New Delivery person {available_delivery_person.first_name} {available_delivery_person.last_name} assigned to Order #{order.order_id}.")
+        else:
+            print(f"No available delivery person for postal code {postal_code}.")
+            order.status = "Waiting for delivery"
 
     session.commit()
 

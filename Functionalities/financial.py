@@ -7,12 +7,16 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sqlalchemy.orm import Session
 from Database.Models.orders import Order
 from Database.Models.customer import Customer
+from Functionalities.status_update_loop import run_status_update_loop
 import datetime
 
 def generate_financial_report(session: Session):
     """
     Generate a financial report for orders, with filters by gender, age, and postal code.
     """
+    # Explicitly refresh the session to ensure it's using the most up-to-date data
+    session.expire_all()  # This will expire all objects and ensure fresh data is loaded
+
     print("Financial Report")
 
     filters = {

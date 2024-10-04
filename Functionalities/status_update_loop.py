@@ -12,17 +12,17 @@ from Database.Models.orders import Order
 def run_status_update_loop():
     try:
         while True:
-
             with SessionLocal() as session:
-
+                # Fetch active orders
                 active_orders = session.query(Order).filter(Order.status.in_(["Being prepared", "Out for delivery"])).all()
 
-
-                for order in active_orders:
-                    update_order_status(session, order.order_id)
+                # Update statuses only if there are active orders
+                if active_orders:
+                    for order in active_orders:
+                        update_order_status(session, order.order_id)
 
 
             time.sleep(5)
 
     except Exception as e:
-        print(f"Error in status update loop: {e}")
+        pass

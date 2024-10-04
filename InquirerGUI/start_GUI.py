@@ -24,10 +24,17 @@ from Functionalities.financial import generate_financial_report
 account = None
 birthday_offer_homepage = False
 
+# Global reference to track the thread
+update_thread = None
+
 def start_GUI(session: Session, account, is_admin) -> None:
-    """
-    Start/launch terminal GUI. The function differentiates between admin and regular user.
-    """
+    global update_thread
+
+    # Check if the thread has already been started
+    if update_thread is None or not update_thread.is_alive():
+        update_thread = threading.Thread(target=run_status_update_loop, daemon=True)
+        update_thread.start()
+
     while True:  # Ensure we keep showing the admin menu after any action
         if is_admin:
             print("\nADMIN HOMEPAGE")
@@ -70,9 +77,7 @@ def start_GUI(session: Session, account, is_admin) -> None:
                 log_out(session)
                 break
 
-    # Start the background thread for updating order statuses
-    update_thread = threading.Thread(target=run_status_update_loop, daemon=True)
-    update_thread.start()
+
 
 
 def homepage(session: Session):
