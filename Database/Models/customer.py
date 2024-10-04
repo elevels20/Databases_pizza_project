@@ -28,6 +28,7 @@ class CustomerAccount(Base):
     discount_pizza_count = Column(Integer, nullable=False, default=0) # Tracks every 10 pizzas for discount
     discount_code_id = Column(Integer, ForeignKey('discount_codes.discount_code_id'), nullable=True)
     birthday_offer_used_year = Column(Integer, nullable=True, default = None)  # Track last year the offer was used
+    is_admin = Column(Boolean, default=False)
     #free_birthday_pizza = Column(Boolean, nullable=False, default=False)
     #free_birthday_drink = Column(Boolean, nullable=False, default=False)
 

@@ -11,10 +11,10 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from Database.Models.customer import CustomerAccount
 
-def login_inquirer(session: Session) -> CustomerAccount:
+def login_inquirer(session: Session):
     """
-    Login screen for terminal GUI. 
-    Returns CustomerAccount of registered/logged in customer.
+    Login screen for terminal GUI.
+    Returns CustomerAccount of registered/logged in customer and whether the account is an admin.
     """
     questions = [
         inquirer.List(
@@ -38,14 +38,23 @@ def login_inquirer(session: Session) -> CustomerAccount:
         username = answers['username']
         password = answers['password']
 
-        login(session, 
-            username = username,
-            password = password
-        )
+        login(session,
+              username=username,
+              password=password
+              )
 
         account = session.query(CustomerAccount).filter(CustomerAccount.username == username, CustomerAccount.password == password).first()
-        return account
-    
+
+        if account and account.is_admin:
+            print("Logged in as Admin.")
+            return account, True  # Return True to indicate admin account
+        elif account:
+            print(f"Welcome {account.customer.first_name}!")
+            return account, False
+        else:
+            print("Invalid credentials.")
+            return None, False
+
     elif answers['login'] == 'Register':
         print("You chose: Register")
         questions = [
@@ -54,7 +63,7 @@ def login_inquirer(session: Session) -> CustomerAccount:
             inquirer.Text('first_name', message="What is your first name?"),
             inquirer.Text('last_name', message="What is your last name?"),
             inquirer.List('gender', message="What is your gender?", choices=['M', 'F']),
-            inquirer.Text('birthdate', message="What is date of birth? (YYYY-MM-DD)"),
+            inquirer.Text('birthdate', message="What is your date of birth? (YYYY-MM-DD)"),
             inquirer.Text('phone_number', message="What is your phone number?"),
             inquirer.Text('address', message="What is your address?"),
             inquirer.Text('postal_code', message="What's your postal code")
@@ -67,27 +76,63 @@ def login_inquirer(session: Session) -> CustomerAccount:
             username = answers['username']
             password = answers['password']
             register(session,
-                username = username,
-                password = password,
-                first_name = answers['first_name'],
-                last_name = answers['last_name'],
-                gender = answers['gender'],
-                birthdate = datetime.strptime(answers['birthdate'], '%Y-%m-%d').date(),
-                phone_number = answers['phone_number'],
-                address = answers['address'],
-                postal_code= answers['postal_code']
+                     username=username,
+                     password=password,
+                     first_name=answers['first_name'],
+                     last_name=answers['last_name'],
+                     gender=answers['gender'],
+                     birthdate=birthdate,
+                     phone_number=answers['phone_number'],
+                     address=answers['address'],
+                     postal_code=answers['postal_code']
+                     )
 
-            )
-        
             account = session.query(CustomerAccount).filter(CustomerAccount.username == username, CustomerAccount.password == password).first()
-            return account
+            return account, False
 
         except ValueError:
             print("Invalid date format. Please use YYYY-MM-DD.")
-            return
+            return None, False
 
     elif answers['login'] == 'Exit':
         print("Exiting the pizza service!")
-        # Code to handle 'Exit' action
         exit()
-        return
+        return None, False
+
+
+def add_admin_account(session: Session):
+    """
+    Add an admin account during the database initialization.
+    """
+    admin_username = "admin"
+    admin_password = "admin_password"  # You may hash this for better security
+
+    existing_admin = session.query(CustomerAccount).filter_by(username=admin_username).first()
+
+    if not existing_admin:
+        from Database.Models.customer import Customer
+
+        admin_customer = Customer(
+            first_name="Admin",
+            last_name="User",
+            gender="F",
+            birthdate="1970-01-01",
+            phone_number='0000000000',
+            address="Admin Address",
+            postal_code="00000"
+        )
+
+        admin_account = CustomerAccount(
+            username=admin_username,
+            password=admin_password,
+            customer=admin_customer,
+            pizza_count=0,
+            is_admin=True  # Mark the account as admin
+        )
+
+        session.add(admin_account)
+        session.commit()
+
+        print("Admin account created.")
+    else:
+        print("Admin account already exists.")

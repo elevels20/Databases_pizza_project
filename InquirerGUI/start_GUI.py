@@ -18,26 +18,61 @@ from helper_functions_GUI import print_order_details, log_out, select_free_birth
 from datetime import timedelta, date
 from Functionalities.place_order import place_order
 from Functionalities.cancel_order import cancel_order
+from Functionalities.financial import generate_financial_report
+
 
 account = None
 birthday_offer_homepage = False
 
-def start_GUI(session: Session) -> None:
+def start_GUI(session: Session, account, is_admin) -> None:
     """
-    Start/launch terminal GUI.
+    Start/launch terminal GUI. The function differentiates between admin and regular user.
     """
+    while True:  # Ensure we keep showing the admin menu after any action
+        if is_admin:
+            print("\nADMIN HOMEPAGE")
+            print(f"Hello {account.customer.first_name} {account.customer.last_name}, welcome to the admin panel of our pizza service!")
 
-    global account
-    # Launch login screen and get account of customer
-    account = PAGES["Login page"](session)
-    
-    # Start homepage if logged in
-    if account:
-        return PAGES["To homepage"](session)
+            ADMIN_HOMEPAGE_CHOICES = ['View financial report', 'View account', 'Log out']
+            questions = [
+                inquirer.List('action', message="What would you like to do?", choices=ADMIN_HOMEPAGE_CHOICES)
+            ]
+
+            answers = inquirer.prompt(questions)
+
+            if answers['action'] == 'View financial report':
+                generate_financial_report(session)
+            elif answers['action'] == 'View account':
+                view_account(session, is_admin)  # Pass is_admin to the view_account function
+            elif answers['action'] == 'Log out':
+                log_out(session)
+                break
+        else:
+            print("\nHOMEPAGE")
+            print(f"Hello {account.customer.first_name} {account.customer.last_name}, welcome to our pizza service!")
+
+            HOMEPAGE_CHOICES = ['View account', 'View menu', 'Place order', 'Order history', 'Log out']
+            questions = [
+                inquirer.List('action', message="What would you like to do?", choices=HOMEPAGE_CHOICES)
+            ]
+
+            answers = inquirer.prompt(questions)
+
+            if answers['action'] == 'View account':
+                view_account(session, is_admin)
+            elif answers['action'] == 'View menu':
+                menu(session)
+            elif answers['action'] == 'Place order':
+                place_order_page(session)
+            elif answers['action'] == 'Order history':
+                view_order_history(session)
+            elif answers['action'] == 'Log out':
+                log_out(session)
+                break
 
     # Start the background thread for updating order statuses
-update_thread = threading.Thread(target=run_status_update_loop, daemon=True)
-update_thread.start()
+    update_thread = threading.Thread(target=run_status_update_loop, daemon=True)
+    update_thread.start()
 
 
 def homepage(session: Session):
@@ -57,11 +92,11 @@ def homepage(session: Session):
             birthday_offer_homepage = True
         else:
             birthday_offer_homepage = False
-    
+
     if birthday_offer_homepage:
         print("Happy birthday! You can get a free pizza and drink today!")
         HOMEPAGE_CHOICES = ['GET BIRTHDAY PRESENT', 'View account', 'View menu', 'Place order', 'Order history', 'Log out']
-    else: 
+    else:
         HOMEPAGE_CHOICES = ['View account', 'View menu', 'Place order', 'Order history', 'Log out']
     questions = [
         inquirer.List('action', message="What would you like to do?", choices=HOMEPAGE_CHOICES)
@@ -70,7 +105,7 @@ def homepage(session: Session):
     answers = inquirer.prompt(questions)
     return PAGES[answers['action']](session)
 
-def view_account(session: Session):
+def view_account(session: Session, is_admin: bool):
     """
     Show account of customer.
     """
@@ -78,7 +113,7 @@ def view_account(session: Session):
     print(f"Username: {account.username}")
     print(f"Full name: {account.customer.first_name} {account.customer.last_name}")
     print(f"Gender: {account.customer.gender}")
-    print(f"Date of birth: {account.customer.birthdate.strftime("%Y-%m-%d")}")
+    print(f"Date of birth: {account.customer.birthdate.strftime('%Y-%m-%d')}")
     print(f"Address: {account.customer.address}")
     print(f"Postal Code {account.customer.postal_code}")
     print(f"Amount of previously ordered pizzas: {account.total_pizza_count}")
@@ -91,7 +126,11 @@ def view_account(session: Session):
     ]
 
     answers = inquirer.prompt(questions)
-    return PAGES[answers['action']](session)
+
+    if is_admin:
+        return PAGES['Admin homepage'](session, account, is_admin)
+    else:
+        return PAGES['To homepage'](session)
 
 def place_order_page(session: Session):
     """
@@ -149,7 +188,7 @@ def place_order_page(session: Session):
                 selected_pizzas[i] = (pizza, existing_quantity + quantity)  # Update quantity if already in list
                 found = True
                 break
-        
+
         if not found:
             selected_pizzas.append((selected_pizza, quantity))  # Add new pizza if not already in list
 
@@ -189,7 +228,7 @@ def place_order_page(session: Session):
                 selected_desserts[i] = (dessert, existing_quantity + quantity)  # Update quantity if already in list
                 found = True
                 break
-        
+
         if not found:
             selected_desserts.append((selected_dessert, quantity))  # Add new dessert if not already in list
 
@@ -229,7 +268,7 @@ def place_order_page(session: Session):
                 selected_drinks[i] = (drink, existing_quantity + quantity)  # Update quantity if already in list
                 found = True
                 break
-        
+
         if not found:
             selected_drinks.append((selected_drink, quantity))  # Add new drink if not already in list
 
@@ -257,7 +296,7 @@ def place_order_page(session: Session):
         print_order_details(session, new_order.order_id)
         if account.discount_pizza_count >= 10:
             print("\nCONGRATULATIONS, you get a 10% discount on your next order!")
-        
+
     # Back to homepage
     questions = [
         inquirer.List('action', message="What would you like to do?", choices=['To homepage', 'Place order'])
@@ -300,11 +339,11 @@ def view_order_history(session: Session):
     else:
         try:
             previous_order = session.query(Order).filter(Order.order_id == answers['previous_ids'], Order.customer_id == account.customer_id).first()
-            
+
             if not previous_order:
                 print("Order not found.")
                 return PAGES['Order history'](session)
-            
+
             if previous_order.birthday_order:
                 print("This order was a free birthday present")
             print_order_details(session, previous_order.order_id)
@@ -539,10 +578,19 @@ PAGES = {
     "To homepage": homepage,
     "Log out": log_out,
     "Cancel order": cancel_order,
-    'GET BIRTHDAY PRESENT': get_birthday_present
+    'GET BIRTHDAY PRESENT': get_birthday_present,
+    "Admin homepage": start_GUI
 }
 
 with SessionLocal() as session:
-    start_GUI(session)
-    session.close()
+    result = login_inquirer(session)  # Assuming login_inquirer returns a tuple
 
+    if result is not None:
+        account = result[0]  # Assuming the first item in the tuple is the account object
+        # Check if the logged-in account is an admin
+        is_admin = account.username == 'admin'  # Adjust this logic as needed
+        start_GUI(session, account, is_admin)
+    else:
+        print("Failed to login or register.")
+
+    session.close()

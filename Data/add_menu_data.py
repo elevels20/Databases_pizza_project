@@ -12,6 +12,7 @@ from sqlalchemy import exists
 from Database.Models.menu import Dessert, Drink, Pizza
 from Database.Models.ingredients import Ingredient
 from Database.Models.delivery import DeliveryPerson, PostalCodeArea
+from Database.Models.customer import Customer, CustomerAccount
 import subprocess
 
 # Initialize the database (create tables if not exists)
@@ -115,6 +116,32 @@ with SessionLocal() as session:
     add_items_to_db(session, PostalCodeArea, postal_code_areas)
     add_items_to_db(session, DeliveryPerson, delivery_persons)
 
+def add_admin():
+    # Create an admin account
+    with SessionLocal() as session:
+        admin_customer = Customer(
+            first_name="Admin",
+            last_name="User",
+            gender="F",
+            birthdate="1970-01-01",
+            phone_number='0000000000',
+            address="Admin Address",
+            postal_code="00000"
+        )
+
+        admin_account = CustomerAccount(
+            username="admin",
+            password="admin",
+            customer=admin_customer,
+            total_pizza_count=0,
+            discount_pizza_count=0,
+            is_admin=True
+        )
+
+        session.add(admin_account)
+        session.commit()
+
+add_admin()
 # adding ingredients, prices and diets to pizzas
 # subprocess.run(["python3", "add_pizza_ingredients.py"])
 
