@@ -99,46 +99,57 @@ def place_order(session: Session, username: str, pizzas: List[Tuple[Pizza, int]]
 def assign_delivery_person(session: Session, order: Order):
     postal_code = order.customer.postal_code
     three_minutes_ago = datetime.now() - timedelta(minutes=3)
+    MAX_PIZZAS_PER_DELIVERY = 3
 
     # Find recent orders within the same postal code and within 3 minutes
     recent_orders = session.query(Order).filter(
         Order.customer.has(postal_code=postal_code),
+        Order.status.in_(["Being prepared", "Out for delivery"]),
         Order.order_time >= three_minutes_ago,
         Order.delivery_person_id.isnot(None)
     ).all()
 
-    # Try to group the new order with existing orders if they can be grouped
-    total_pizzas = sum(
-        session.query(OrderPizza).filter(OrderPizza.order_id == o.order_id).count() for o in recent_orders
-    )
-    new_order_pizza_count = session.query(OrderPizza).filter(OrderPizza.order_id == order.order_id).count()
+    # Track how many pizzas each delivery person is handling
+    delivery_person_pizza_count = {}
 
-    if total_pizzas + new_order_pizza_count <= 3:
-        # Assign the new order to the same delivery person handling recent orders
-        if recent_orders:
-            delivery_person = session.query(DeliveryPerson).filter(
-                DeliveryPerson.delivery_person_id == recent_orders[0].delivery_person_id
-            ).first()
-            order.delivery_person_id = delivery_person.delivery_person_id
-            print(f"Grouped with existing delivery: Delivery person {delivery_person.first_name} {delivery_person.last_name} handling Order #{order.order_id}")
-        else:
-            print("No recent orders to group. Assigning new delivery person.")
+    for recent_order in recent_orders:
+        delivery_person_id = recent_order.delivery_person_id
+        if delivery_person_id not in delivery_person_pizza_count:
+            delivery_person_pizza_count[delivery_person_id] = 0
 
-    # If no groupable orders are found or the pizza count exceeds 3, assign a new delivery person
-    if not order.delivery_person_id:
-        available_delivery_person = session.query(DeliveryPerson).join(PostalCodeArea).filter(
-            PostalCodeArea.postal_code == postal_code,
-            DeliveryPerson.availability == True
-        ).first()
+        # Count pizzas in each order handled by the delivery person
+        pizzas_in_order = session.query(OrderPizza).filter(OrderPizza.order_id == recent_order.order_id).all()
+        total_pizzas = sum([pizza.quantity for pizza in pizzas_in_order])  # Correct pizza counting
+        delivery_person_pizza_count[delivery_person_id] += total_pizzas
 
-        if available_delivery_person:
-            available_delivery_person.current_order_id = order.order_id
-            available_delivery_person.availability = False
-            order.delivery_person = available_delivery_person
-            print(f"New Delivery person {available_delivery_person.first_name} {available_delivery_person.last_name} assigned to Order #{order.order_id}.")
-        else:
-            print(f"No available delivery person for postal code {postal_code}.")
-            order.status = "Waiting for delivery"
+    # Calculate the number of pizzas in the new order
+    pizzas_in_new_order = session.query(OrderPizza).filter(OrderPizza.order_id == order.order_id).all()
+    new_order_pizza_count = sum([pizza.quantity for pizza in pizzas_in_new_order])  # Correct pizza counting
+
+    # Check if we can group the new order with existing deliveries without exceeding the limit
+    for delivery_person_id, total_pizzas_handled in delivery_person_pizza_count.items():
+        # Check if the delivery person is not in cooldown
+        delivery_person = session.query(DeliveryPerson).filter(DeliveryPerson.delivery_person_id == delivery_person_id).first()
+        if delivery_person.unavailable_until is None or delivery_person.unavailable_until <= datetime.now():
+            # Check if they can handle more pizzas without exceeding the maximum limit
+            if total_pizzas_handled + new_order_pizza_count <= MAX_PIZZAS_PER_DELIVERY:
+                order.delivery_person_id = delivery_person_id
+                session.commit()
+                return
+
+    # If no grouping is possible, assign a new delivery person who is available and not in cooldown
+    available_delivery_person = session.query(DeliveryPerson).join(PostalCodeArea).filter(
+        PostalCodeArea.postal_code == postal_code,
+        DeliveryPerson.availability == True,
+        (DeliveryPerson.unavailable_until == None) | (DeliveryPerson.unavailable_until <= datetime.now())
+    ).first()
+
+    if available_delivery_person:
+        available_delivery_person.current_order_id = order.order_id
+        available_delivery_person.availability = False
+        order.delivery_person = available_delivery_person
+    else:
+        order.status = "Waiting for delivery"
 
     session.commit()
 

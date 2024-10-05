@@ -93,19 +93,33 @@ postal_code_areas = [
     PostalCodeArea(postal_code='55555', city='Utrecht', delivery_person_count=2)
 ]
 
-# Manually add delivery personnel
 delivery_persons = [
+    # Postal code area 1
     DeliveryPerson(first_name='John', last_name='Doe', postal_code_area_id=1),
     DeliveryPerson(first_name='Jane', last_name='Smith', postal_code_area_id=1),
+    DeliveryPerson(first_name='Michael', last_name='Davis', postal_code_area_id=1),
+
+    # Postal code area 2
     DeliveryPerson(first_name='Mike', last_name='Johnson', postal_code_area_id=2),
     DeliveryPerson(first_name='Sara', last_name='Brown', postal_code_area_id=2),
+    DeliveryPerson(first_name='Laura', last_name='Green', postal_code_area_id=2),
+
+    # Postal code area 3
     DeliveryPerson(first_name='Tom', last_name='Clark', postal_code_area_id=3),
     DeliveryPerson(first_name='Emily', last_name='White', postal_code_area_id=3),
+    DeliveryPerson(first_name='Kevin', last_name='Adams', postal_code_area_id=3),
+
+    # Postal code area 4
     DeliveryPerson(first_name='Alex', last_name='Taylor', postal_code_area_id=4),
     DeliveryPerson(first_name='Sophia', last_name='Lewis', postal_code_area_id=4),
+    DeliveryPerson(first_name='Rachel', last_name='Wright', postal_code_area_id=4),
+
+    # Postal code area 5
     DeliveryPerson(first_name='Chris', last_name='Walker', postal_code_area_id=5),
-    DeliveryPerson(first_name='Anna', last_name='Hall', postal_code_area_id=5)
+    DeliveryPerson(first_name='Anna', last_name='Hall', postal_code_area_id=5),
+    DeliveryPerson(first_name='Luke', last_name='King', postal_code_area_id=5)
 ]
+
 
 
 with SessionLocal() as session:
