@@ -33,17 +33,17 @@ update_thread = None
 def start_GUI(session: Session, account, is_admin) -> None:
     global update_thread
 
-    # Check if the thread has already been started
     if update_thread is None or not update_thread.is_alive():
         update_thread = threading.Thread(target=run_status_update_loop, daemon=True)
         update_thread.start()
 
-    while True:  # Ensure we keep showing the admin menu after any action
+    while True:
         if is_admin:
             print("\nADMIN HOMEPAGE")
             print(f"Hello {account.customer.first_name} {account.customer.last_name}, welcome to the admin panel of our pizza service!")
 
-            ADMIN_HOMEPAGE_CHOICES = ['Generate discount codes', 'View financial report', 'View account', 'Log out']
+            ADMIN_HOMEPAGE_CHOICES = ['Generate discount codes', 'View financial report', 'Current Orders', 'View account', 'Log out']
+
             questions = [
                 inquirer.List('action', message="What would you like to do?", choices=ADMIN_HOMEPAGE_CHOICES)
             ]
@@ -54,8 +54,10 @@ def start_GUI(session: Session, account, is_admin) -> None:
                 admin_generate_discount_codes(session)
             elif answers['action'] == 'View financial report':
                 generate_financial_report(session)
+            elif answers['action'] == 'Current Orders':
+                view_current_orders(session)
             elif answers['action'] == 'View account':
-                view_account(session, is_admin)  # Pass is_admin to the view_account function
+                view_account(session, is_admin)
             elif answers['action'] == 'Log out':
                 log_out(session)
                 break
@@ -616,6 +618,49 @@ def admin_generate_discount_codes(session: Session):
     # Redirect back to admin homepage
     admin_account = session.query(CustomerAccount).filter(CustomerAccount.username == 'admin').first()
     return PAGES['Admin homepage'](session, admin_account, is_admin=True)
+
+def view_current_orders(session: Session):
+    """
+    Display orders that are marked as 'Being prepared' for restaurant monitoring, including pizzas, desserts, and drinks.
+    This triggers a status update for each order to ensure real-time accuracy.
+    """
+    print("CURRENT ORDERS")
+
+    active_orders = session.query(Order).filter(Order.status.in_(["Being prepared", "Out for delivery"])).all()
+    for order in active_orders:
+        update_order_status(session, order.order_id)
+
+    current_orders = session.query(Order).filter(Order.status == "Being prepared").all()
+
+    if not current_orders:
+        print("Currently there are no orders")
+    else:
+        for order in current_orders:
+            print(f"\nOrder ID: {order.order_id}")
+            print(f"Customer: {order.customer.first_name} {order.customer.last_name}")
+            print(f"Order Time: {order.order_time}")
+            print(f"Total Price: {order.total_price}")
+
+            print("PIZZAS ORDERED:")
+            for order_pizza in order.order_pizzas:
+                print(f"  - {order_pizza.pizza.name} (x{order_pizza.quantity})")
+
+            print("DESSERTS ORDERED:")
+            for order_dessert in order.order_desserts:
+                print(f"  - {order_dessert.dessert.name} (x{order_dessert.quantity})")
+
+            print("DRINKS ORDERED:")
+            for order_drink in order.order_drinks:
+                print(f"  - {order_drink.drink.name} (x{order_drink.quantity})")
+
+            print("------")
+
+    questions = [
+        inquirer.List('action', message="Go back", choices=['To admin homepage'])
+    ]
+    answers = inquirer.prompt(questions)
+    if answers['action'] == 'To admin homepage':
+        return
 
 PAGES = {
     "Login page": login_inquirer,
