@@ -55,27 +55,29 @@ def start_GUI(session: Session, account, is_admin) -> None:
                 log_out(session)
                 break
         else:
-            print("\nHOMEPAGE")
-            print(f"Hello {account.customer.first_name} {account.customer.last_name}, welcome to our pizza service!")
+            homepage(session)
+            break
+            # print("\nHOMEPAGE")
+            # print(f"Hello {account.customer.first_name} {account.customer.last_name}, welcome to our pizza service!")
 
-            HOMEPAGE_CHOICES = ['View account', 'View menu', 'Place order', 'Order history', 'Log out']
-            questions = [
-                inquirer.List('action', message="What would you like to do?", choices=HOMEPAGE_CHOICES)
-            ]
+            # HOMEPAGE_CHOICES = ['View account', 'View menu', 'Place order', 'Order history', 'Log out']
+            # questions = [
+            #    inquirer.List('action', message="What would you like to do?", choices=HOMEPAGE_CHOICES)
+            #]
 
-            answers = inquirer.prompt(questions)
+            #answers = inquirer.prompt(questions)
 
-            if answers['action'] == 'View account':
-                view_account(session, is_admin)
-            elif answers['action'] == 'View menu':
-                menu(session)
-            elif answers['action'] == 'Place order':
-                place_order_page(session)
-            elif answers['action'] == 'Order history':
-                view_order_history(session)
-            elif answers['action'] == 'Log out':
-                log_out(session)
-                break
+            #if answers['action'] == 'View account':
+            #    view_account(session, is_admin)
+            #elif answers['action'] == 'View menu':
+            #    menu(session)
+            #elif answers['action'] == 'Place order':
+            #    place_order_page(session)
+            #elif answers['action'] == 'Order history':
+            #    view_order_history(session)
+            #elif answers['action'] == 'Log out':
+            #    log_out(session)
+            #    break
 
 
 
@@ -110,7 +112,7 @@ def homepage(session: Session):
     answers = inquirer.prompt(questions)
     return PAGES[answers['action']](session)
 
-def view_account(session: Session, is_admin: bool):
+def view_account(session: Session, is_admin: bool=False):
     """
     Show account of customer.
     """

@@ -66,7 +66,7 @@ def login_inquirer(session: Session):
             inquirer.Text('birthdate', message="What is your date of birth? (YYYY-MM-DD)"),
             inquirer.Text('phone_number', message="What is your phone number?"),
             inquirer.Text('address', message="What is your address?"),
-            inquirer.Text('postal_code', message="What's your postal code")
+            inquirer.Text('postal_code', message="What is your postal code")
         ]
 
         answers = inquirer.prompt(questions)
