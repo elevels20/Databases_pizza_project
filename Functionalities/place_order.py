@@ -4,6 +4,7 @@ import os
 # Add the parent directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from discount import apply_discount_code
 from sqlalchemy.orm import Session
 from typing import List, Tuple
 from Database.Models.menu import Pizza, Drink, Dessert
@@ -68,19 +69,20 @@ def place_order(session: Session, username: str, pizzas: List[Tuple[Pizza, int]]
             for dessert, quantity in desserts:
                 total_price += dessert.price * quantity
                 session.add(OrderDessert(dessert=dessert, order=new_order, quantity=quantity))
-                
-        if not birthday_offer:
-            if discount_applied:
-                total_price *= 0.9  # Apply a 10% discount
-                print("Congratulations! You have received a 10% discount on this order.")
 
         if birthday_offer:
             new_order.total_price = 0
             new_order.birthday_order = True
             order_customer_account.birthday_offer_used_year = int(date.today().year)
         else:
+            if discount_applied:
+                total_price *= 0.9  # Apply a 10% discount
+                print("Congratulations! You have received a 10% discount on this order.")
+
+            # Apply extra discount code if any
+            total_price = apply_discount_code(session, order_customer_account, total_price)
             new_order.total_price = round(total_price, 2)
-                
+
         session.add(new_order)
         session.commit()
 

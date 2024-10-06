@@ -75,7 +75,7 @@ def login_inquirer(session: Session):
             birthdate = datetime.strptime(answers['birthdate'], '%Y-%m-%d').date()
             username = answers['username']
             password = answers['password']
-            register(session,
+            registered = register(session,
                      username=username,
                      password=password,
                      first_name=answers['first_name'],
@@ -86,7 +86,9 @@ def login_inquirer(session: Session):
                      address=answers['address'],
                      postal_code=answers['postal_code']
                      )
-
+            
+            if not registered:
+                exit()
             account = session.query(CustomerAccount).filter(CustomerAccount.username == username, CustomerAccount.password == password).first()
             return account, False
 
