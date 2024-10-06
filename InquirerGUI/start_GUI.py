@@ -16,7 +16,8 @@ from Database.Models.menu import Pizza, Dessert, Drink
 from Database.Models.orders import Order
 from helper_functions_GUI import print_order_details, log_out, select_free_birthday_drink, select_free_birthday_pizza
 from datetime import timedelta, date
-from Database.Models.customer import DiscountCode
+from Database.Models.customer import DiscountCode, CustomerAccount
+from discount import generate_discount_code
 
 from Functionalities.place_order import place_order
 from Functionalities.cancel_order import cancel_order
@@ -42,14 +43,16 @@ def start_GUI(session: Session, account, is_admin) -> None:
             print("\nADMIN HOMEPAGE")
             print(f"Hello {account.customer.first_name} {account.customer.last_name}, welcome to the admin panel of our pizza service!")
 
-            ADMIN_HOMEPAGE_CHOICES = ['View financial report', 'View account', 'Log out']
+            ADMIN_HOMEPAGE_CHOICES = ['Generate discount codes', 'View financial report', 'View account', 'Log out']
             questions = [
                 inquirer.List('action', message="What would you like to do?", choices=ADMIN_HOMEPAGE_CHOICES)
             ]
 
             answers = inquirer.prompt(questions)
 
-            if answers['action'] == 'View financial report':
+            if answers['action'] == 'Generate discount codes':
+                admin_generate_discount_codes(session)
+            elif answers['action'] == 'View financial report':
                 generate_financial_report(session)
             elif answers['action'] == 'View account':
                 view_account(session, is_admin)  # Pass is_admin to the view_account function
@@ -129,16 +132,17 @@ def view_account(session: Session, is_admin: bool=False):
     if account.discount_pizza_count >= 10:
         print("CONGRATULATIONS, you get a 10% discount on your next order!")
 
-    # Fetch and display discount codes associated with the account
-    discount_codes = session.query(DiscountCode).filter(DiscountCode.customer_account_id == account.customer_account_id).all()
+    if not is_admin:
+        # Fetch and display discount codes associated with the account
+        discount_codes = session.query(DiscountCode).filter(DiscountCode.customer_account_id == account.customer_account_id).all()
     
-    if discount_codes:
-        print("\nYour Discount Codes:")
-        for code in discount_codes:
-            status = "Used" if code.is_used else "Available"
-            print(f"Code: {code.code}, Discount: {code.discount_percentage}%, Status: {status}")
-    else:
-        print("You have no discount codes associated with your account.")
+        if discount_codes:
+            print("\nYour Discount Codes:")
+            for code in discount_codes:
+                status = "Used" if code.is_used else "Available"
+                print(f"Code: {code.code}, Discount: {code.discount_percentage}%, Status: {status}")
+        else:
+            print("You have no discount codes associated with your account.")
 
 
     questions = [
@@ -585,6 +589,33 @@ def get_birthday_present(session: Session):
     ]
     answers = inquirer.prompt(questions)
     return PAGES[answers['action']](session)
+
+def admin_generate_discount_codes(session: Session):
+    """
+    Admin page to generate discount codes for all customers.
+    """
+    questions = [
+        inquirer.Text('discount_percentage', message="Enter discount percentage (e.g., 10 for 10%)"),
+        inquirer.Text('num_codes', message="Enter the number of discount codes to generate for each customer"),
+    ]
+    
+    answers = inquirer.prompt(questions)
+    
+    discount_percentage = float(answers['discount_percentage'])
+    num_codes = int(answers['num_codes'])
+
+    # Fetch all customer accounts
+    customer_accounts = session.query(CustomerAccount).all()
+    
+    for account in customer_accounts:
+        for _ in range(num_codes):
+            generate_discount_code(session, account, discount_percentage)
+    
+    print(f"Generated {num_codes} discount codes for each customer at a discount of {discount_percentage}%.")
+    
+    # Redirect back to admin homepage
+    admin_account = session.query(CustomerAccount).filter(CustomerAccount.username == 'admin').first()
+    return PAGES['Admin homepage'](session, admin_account, is_admin=True)
 
 PAGES = {
     "Login page": login_inquirer,
