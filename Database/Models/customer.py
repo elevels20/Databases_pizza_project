@@ -26,14 +26,13 @@ class CustomerAccount(Base):
     password = Column(String(32), nullable=False)
     total_pizza_count = Column(Integer, nullable=False, default=0) # Total number of pizzas ordered
     discount_pizza_count = Column(Integer, nullable=False, default=0) # Tracks every 10 pizzas for discount
-    discount_code_id = Column(Integer, ForeignKey('discount_codes.discount_code_id'), nullable=True)
     birthday_offer_used_year = Column(Integer, nullable=True, default = None)  # Track last year the offer was used
     is_admin = Column(Boolean, default=False)
     #free_birthday_pizza = Column(Boolean, nullable=False, default=False)
     #free_birthday_drink = Column(Boolean, nullable=False, default=False)
 
     customer = relationship("Customer", back_populates="accounts")
-    discount_code = relationship("DiscountCode", back_populates="customer_accounts")
+    discount_codes = relationship("DiscountCode", back_populates="customer_account")
 
 class DiscountCode(Base):
     __tablename__ = 'discount_codes'
@@ -41,7 +40,8 @@ class DiscountCode(Base):
     discount_code_id = Column(Integer, primary_key=True, autoincrement=True)
     code = Column(String(16), nullable=False, unique=True)
     discount_percentage = Column(Float, nullable=False)
-    used = Column(Boolean, nullable=False, default=False)
+    is_used = Column(Boolean, nullable=False, default=False)
+    customer_account_id = Column(Integer, ForeignKey('customer_accounts.customer_account_id'), nullable=False)
 
-    customer_accounts = relationship("CustomerAccount", back_populates="discount_code")
+    customer_account = relationship("CustomerAccount", back_populates="discount_codes")
 

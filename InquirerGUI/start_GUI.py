@@ -16,6 +16,8 @@ from Database.Models.menu import Pizza, Dessert, Drink
 from Database.Models.orders import Order
 from helper_functions_GUI import print_order_details, log_out, select_free_birthday_drink, select_free_birthday_pizza
 from datetime import timedelta, date
+from Database.Models.customer import DiscountCode
+
 from Functionalities.place_order import place_order
 from Functionalities.cancel_order import cancel_order
 from Functionalities.financial import generate_financial_report
@@ -126,6 +128,17 @@ def view_account(session: Session, is_admin: bool=False):
     print(f"Amount of previously ordered pizzas: {account.total_pizza_count}")
     if account.discount_pizza_count >= 10:
         print("CONGRATULATIONS, you get a 10% discount on your next order!")
+
+    # Fetch and display discount codes associated with the account
+    discount_codes = session.query(DiscountCode).filter(DiscountCode.customer_account_id == account.customer_account_id).all()
+    
+    if discount_codes:
+        print("\nYour Discount Codes:")
+        for code in discount_codes:
+            status = "Used" if code.is_used else "Available"
+            print(f"Code: {code.code}, Discount: {code.discount_percentage}%, Status: {status}")
+    else:
+        print("You have no discount codes associated with your account.")
 
 
     questions = [
@@ -589,15 +602,22 @@ PAGES = {
     "Admin homepage": start_GUI
 }
 
-with SessionLocal() as session:
-    result = login_inquirer(session)  # Assuming login_inquirer returns a tuple
 
-    if result is not None:
-        account = result[0]  # Assuming the first item in the tuple is the account object
-        # Check if the logged-in account is an admin
-        is_admin = account.username == 'admin'  # Adjust this logic as needed
-        start_GUI(session, account, is_admin)
+with SessionLocal() as session:
+    result = login_inquirer(session)  
+
+    # Check if result is not None and has expected format
+    if result and isinstance(result, tuple) and len(result) > 0:
+        account = result[0]  # First item in the tuple is the account object
+        
+        # Ensure account is not None before accessing its attributes
+        if account is not None:
+            # Check if the logged-in account is an admin
+            is_admin = account.username == 'admin'
+            start_GUI(session, account, is_admin)
+        else:
+            print("Account is None. Please check your login credentials.")
     else:
-        print("Failed to login or register.")
+        print("Failed to login or register. Result is None or in unexpected format.")
 
     session.close()
