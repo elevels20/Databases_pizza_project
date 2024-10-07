@@ -53,7 +53,8 @@ def start_GUI(session: Session, account, is_admin) -> None:
             if answers['action'] == 'Generate discount codes':
                 admin_generate_discount_codes(session)
             elif answers['action'] == 'View financial report':
-                generate_financial_report(session)
+                with SessionLocal() as session:
+                    generate_financial_report(session)
             elif answers['action'] == 'Current Orders':
                 view_current_orders(session)
             elif answers['action'] == 'View account':

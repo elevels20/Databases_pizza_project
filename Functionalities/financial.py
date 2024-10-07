@@ -12,10 +12,9 @@ import datetime
 
 def generate_financial_report(session: Session):
     """
-    Generate a financial report for orders, with filters by gender, age, and postal code.
+    Generate a real-time financial report for orders, with filters by gender, age, and postal code.
     """
-    # Explicitly refresh the session to ensure it's using the most up-to-date data
-    session.expire_all()  # This will expire all objects and ensure fresh data is loaded
+    session.expire_all()
 
     print("Financial Report")
 
@@ -31,7 +30,6 @@ def generate_financial_report(session: Session):
         query = query.filter(Customer.gender == filters['gender'][0])
 
     age_input = filters['age']
-
     if age_input != 'All':
         if '-' in age_input:
             age_range = age_input.split('-')
@@ -49,10 +47,7 @@ def generate_financial_report(session: Session):
 
     if filters['postal_code'] != 'All':
         postal_codes = [code.strip() for code in filters['postal_code'].split(',')]
-        if len(postal_codes) == 1:
-            query = query.filter(Customer.postal_code == postal_codes[0])
-        else:
-            query = query.filter(Customer.postal_code.in_(postal_codes))
+        query = query.filter(Customer.postal_code.in_(postal_codes))
 
     total_revenue = 0
     order_count = query.count()
@@ -62,5 +57,5 @@ def generate_financial_report(session: Session):
         total_revenue += order.total_price
         print(f"Order ID: {order.order_id}, Customer: {order.customer.first_name} {order.customer.last_name}, Price: {order.total_price}")
 
-    print(f"\nTotal Revenue: {total_revenue}\n")
+    print(f"\nTotal Revenue: {total_revenue:.2f}\n")
     input("Press enter to return to admin menu.")
