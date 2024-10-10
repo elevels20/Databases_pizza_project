@@ -65,8 +65,11 @@ def login_inquirer(session: Session):
             inquirer.List('gender', message="What is your gender?", choices=['M', 'F']),
             inquirer.Text('birthdate', message="What is your date of birth? (YYYY-MM-DD)"),
             inquirer.Text('phone_number', message="What is your phone number?"),
-            inquirer.Text('address', message="What is your address?"),
-            inquirer.Text('postal_code', message="What is your postal code")
+            inquirer.Text('country', message="In what country do you live?"),
+            inquirer.Text('city', message="In what city do you live?"),
+            inquirer.Text('postal_code', message="What is your postal code?"),
+            inquirer.Text('street', message="On what street do you live?"),
+            inquirer.Text('house_number', message="What is your house number?"),
         ]
 
         answers = inquirer.prompt(questions)
@@ -83,8 +86,11 @@ def login_inquirer(session: Session):
                      gender=answers['gender'],
                      birthdate=birthdate,
                      phone_number=answers['phone_number'],
-                     address=answers['address'],
-                     postal_code=answers['postal_code']
+                     country=answers['country'],
+                     city=answers['city'],
+                     postal_code=answers['postal_code'],
+                     street=answers['street'],
+                     house_number=answers['house_number']
                      )
             
             if not registered:

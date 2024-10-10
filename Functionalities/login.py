@@ -26,7 +26,7 @@ def login(session: Session, username: str, password: str) -> bool:
         print(f"Error logging in customer {username}: {e}")
         return False
 
-def register(session: Session, username: str, password: str, first_name: str, last_name: str, gender: str, birthdate: date, phone_number: str, address: str, postal_code: str) -> bool:
+def register(session: Session, username: str, password: str, first_name: str, last_name: str, gender: str, birthdate: date, phone_number: str, country: str,  city: str, postal_code: str, street: str, house_number: int) -> bool:
     """
     Register a new customer and account to the database.
     """
@@ -41,8 +41,11 @@ def register(session: Session, username: str, password: str, first_name: str, la
                 gender = gender,
                 birthdate = birthdate,
                 phone_number = phone_number,
-                address =address,
-                postal_code =postal_code
+                country = country,
+                city = city,
+                postal_code =postal_code,
+                street = street,
+                house_number = house_number
             )
             new_customer_account = CustomerAccount(
                 username = username,

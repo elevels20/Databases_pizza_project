@@ -65,30 +65,6 @@ def start_GUI(session: Session, account, is_admin) -> None:
         else:
             homepage(session)
             break
-            # print("\nHOMEPAGE")
-            # print(f"Hello {account.customer.first_name} {account.customer.last_name}, welcome to our pizza service!")
-
-            # HOMEPAGE_CHOICES = ['View account', 'View menu', 'Place order', 'Order history', 'Log out']
-            # questions = [
-            #    inquirer.List('action', message="What would you like to do?", choices=HOMEPAGE_CHOICES)
-            #]
-
-            #answers = inquirer.prompt(questions)
-
-            #if answers['action'] == 'View account':
-            #    view_account(session, is_admin)
-            #elif answers['action'] == 'View menu':
-            #    menu(session)
-            #elif answers['action'] == 'Place order':
-            #    place_order_page(session)
-            #elif answers['action'] == 'Order history':
-            #    view_order_history(session)
-            #elif answers['action'] == 'Log out':
-            #    log_out(session)
-            #    break
-
-
-
 
 def homepage(session: Session):
     """
@@ -129,35 +105,49 @@ def view_account(session: Session, is_admin: bool=False):
     print(f"Full name: {account.customer.first_name} {account.customer.last_name}")
     print(f"Gender: {account.customer.gender}")
     print(f"Date of birth: {account.customer.birthdate.strftime('%Y-%m-%d')}")
-    print(f"Address: {account.customer.address}")
+    print(f"Country: {account.customer.country}")
+    print(f"City: {account.customer.city}")
     print(f"Postal Code {account.customer.postal_code}")
+    print(f"Street: {account.customer.street}")
+    print(f"House number: {account.customer.house_number}")
     print(f"Amount of previously ordered pizzas: {account.total_pizza_count}")
     if account.discount_pizza_count >= 10:
         print("CONGRATULATIONS, you get a 10% discount on your next order!")
 
     if not is_admin:
-        # Fetch and display discount codes associated with the account
-        discount_codes = session.query(DiscountCode).filter(DiscountCode.customer_account_id == account.customer_account_id).all()
-    
-        if discount_codes:
-            print("\nYour Discount Codes:")
-            for code in discount_codes:
-                status = "Used" if code.is_used else "Available"
-                print(f"Code: {code.code}, Discount: {code.discount_percentage}%, Status: {status}")
+        questions = [
+            inquirer.List('action', message="What do you want to do?", choices=['View my discount codes', 'To homepage'])
+        ]
+        answers = inquirer.prompt(questions)
+
+        if answers['action'] == 'To homepage':
+            return PAGES[answers['action']](session)
         else:
-            print("You have no discount codes associated with your account.")
+            # Fetch and display discount codes associated with the account
+            discount_codes = session.query(DiscountCode).filter(DiscountCode.customer_account_id == account.customer_account_id).all()
+    
+            if discount_codes:
+                print("\nYour Discount Codes:")
+                for code in discount_codes:
+                    status = "Used" if code.is_used else "Available"
+                    print(f"Code: {code.code}, Discount: {code.discount_percentage}%, Status: {status}")
+            else:
+                print("You have no discount codes associated with your account.")
+                
+            questions = [
+                inquirer.List('action', message="What do you want to do?", choices=['View account', 'To homepage'])
+            ]    
+            answers = inquirer.prompt(questions)
+            return PAGES[answers['action']](session)
+    else:     
+        questions = [
+            inquirer.List('action', message="Go back", choices=['To homepage'])
+        ]
 
+        answers = inquirer.prompt(questions)
 
-    questions = [
-        inquirer.List('action', message="Go back", choices=['To homepage'])
-    ]
-
-    answers = inquirer.prompt(questions)
-
-    if is_admin:
-        return PAGES['Admin homepage'](session, account, is_admin)
-    else:
-        return PAGES['To homepage'](session)
+        if answers['action'] == 'To homepage':
+            return PAGES['Admin homepage'](session, account, is_admin)
 
 def place_order_page(session: Session):
     """
