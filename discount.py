@@ -48,13 +48,13 @@ def apply_discount_code(session: Session, account: CustomerAccount, total_price:
 
         if not discount_code:
             print("Invalid discount code.")
-            return total_price
+            return apply_discount_code(session, account, total_price)
         elif discount_code.is_used:
             print("This discount code has already been used.")
-            return total_price
+            return apply_discount_code(session, account, total_price)
         elif discount_code.customer_account_id != account.customer_account_id:
             print("This discount code is not valid for your account.")
-            return total_price
+            return apply_discount_code(session, account, total_price)
         else:
             # Apply discount to the total amount
             discount_amount = (total_price * (float(discount_code.discount_percentage) / 100))
