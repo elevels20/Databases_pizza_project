@@ -4,7 +4,7 @@ import os
 # Add the parent directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from discount import apply_discount_code
+from Functionalities.discount_codes import apply_discount_code
 from sqlalchemy.orm import Session
 from typing import List, Tuple
 from Database.Models.menu import Pizza, Drink, Dessert
