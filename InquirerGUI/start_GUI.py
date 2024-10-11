@@ -17,7 +17,7 @@ from Database.Models.orders import Order
 from helper_functions_GUI import print_order_details, log_out, select_free_birthday_drink, select_free_birthday_pizza
 from datetime import timedelta, date
 from Database.Models.customer import DiscountCode, CustomerAccount
-from discount import generate_discount_code
+from Functionalities.discount_codes import generate_discount_code
 
 from Functionalities.place_order import place_order
 from Functionalities.cancel_order import cancel_order
