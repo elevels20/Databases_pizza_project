@@ -69,7 +69,7 @@ def cancel_order(session: Session, selected_order: Order, account: CustomerAccou
         if selected_order.delivery_person:
             delivery_person = selected_order.delivery_person
             delivery_person.availability = True
-            delivery_person.unavailable_until = None  # Reset their unavailability timestamp if you have one
+            delivery_person.unavailable_until = None  
             print(f"Delivery person {delivery_person.first_name} {delivery_person.last_name} is now available again.")
 
         session.commit()
