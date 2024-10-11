@@ -41,7 +41,7 @@ def place_order(session: Session, username: str, pizzas: List[Tuple[Pizza, int]]
             status="Being prepared",  # Initial status
             order_time=current_time,
             total_price=total_price,
-            delivery_time=current_time + timedelta(seconds=60),  # For testing, change to minutes later
+            delivery_time=current_time + timedelta(minutes=20),  
         )
         if not birthday_offer:
             # Determine if a discount applies
