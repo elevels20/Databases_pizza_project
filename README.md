@@ -9,3 +9,4 @@ To create the database and fill it with data about the menu and ingredients, run
 
 # Run the GUI
 We created a terminal GUI using inquirer. Run [this file](InquirerGUI/start_GUI.py) to use it.
+To login to the admin page, use usernam and password: 'admin'.
