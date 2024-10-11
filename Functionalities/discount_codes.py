@@ -14,10 +14,6 @@ def apply_discount_code(session: Session, account: CustomerAccount, total_price:
     """
     Validate and apply a discount code. The code can only be used once.
     """
-    # Prompt user for discount code
-    #questions = [
-    #    inquirer.Text('discount_code', message="Enter discount code (if any)")
-    #]
     questions = [
         inquirer.List('has_discount', message="Do you have a discount code you would like to use?", choices=['Yes', 'No'])
     ]
@@ -81,9 +77,3 @@ def generate_discount_code(session: Session, account: CustomerAccount, discount_
     session.commit()
 
     print(f"Discount code generated: {discount_code_str} with {discount_percentage}% off for account {account.customer_account_id}.")
-
-# Example usage
-#with SessionLocal() as session:
-#    account = session.query(CustomerAccount).filter(CustomerAccount.username == 'user1').first()
-#    generate_discount_code(session, account, 10)
-#    session.close()
