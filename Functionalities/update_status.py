@@ -22,44 +22,20 @@ def update_order_status(session: Session, order_id: int):
 
     current_time = datetime.now()
 
-    # If the order is being prepared and 30 seconds have passed, mark it as 'Out for delivery'
-    if order.status in ["Being prepared", "Grouped for delivery"] and current_time >= order.order_time + timedelta(seconds=30):
+    # If the order is being prepared and 10 minutes have passed, mark it as 'Out for delivery'
+    if order.status in ["Being prepared", "Grouped for delivery"] and current_time >= order.order_time + timedelta(minutes=10):
         order.status = "Out for delivery"
 
     # If the order is out for delivery and the delivery time has passed, mark it as 'Delivered'
     if order.status == "Out for delivery" and current_time >= order.delivery_time:
         order.status = "Delivered"
-        #print(f"Order #{order_id} has been delivered at {current_time}.")
 
         # After marking the order as delivered, handle the cooldown for the delivery person
         if order.delivery_person:
             delivery_person = order.delivery_person
 
-            # Set the cooldown period (for testing, it's 20 seconds)
-            delivery_person.unavailable_until = current_time + timedelta(seconds=20)
-            #print(f"Delivery person {delivery_person.first_name} {delivery_person.last_name} will be available again after {delivery_person.unavailable_until}")
-
-    # Commit the changes to the database
-    try:
-        session.commit()
-    except Exception as e:
-        session.rollback()
-
-
-def check_delivery_person_availability(session: Session):
-    """
-    Checks and updates the availability of all delivery persons based on their cooldown status.
-    """
-    current_time = datetime.now()
-
-    unavailable_delivery_persons = session.query(DeliveryPerson).filter(DeliveryPerson.unavailable_until.isnot(None)).all()
-
-    for delivery_person in unavailable_delivery_persons:
-        if delivery_person.unavailable_until <= current_time:
-            delivery_person.availability = True
-            delivery_person.unavailable_until = None
-            print(f"Delivery person {delivery_person.first_name} {delivery_person.last_name} is now available.")
-
+            # Set the cooldown period so delivery driver can come back to the restaurant
+            delivery_person.unavailable_until = current_time + timedelta(minutes=10)
 
     try:
         session.commit()

@@ -26,13 +26,12 @@ def run_status_update_loop():
                 # Check and update delivery person availability
                 check_delivery_person_availability(session)
 
-            time.sleep(5)  # Adjust the interval as needed
+            time.sleep(5)
 
     except Exception as e:
         print(f"Error: {e}")
         pass
 
-# Function to check delivery person's availability
 def check_delivery_person_availability(session: Session):
     """
     Checks and updates the availability of all delivery persons based on their cooldown status.
@@ -47,7 +46,6 @@ def check_delivery_person_availability(session: Session):
             # Reset the availability of the delivery person
             delivery_person.availability = True
             delivery_person.unavailable_until = None
-            #print(f"Delivery person {delivery_person.first_name} {delivery_person.last_name} is now available.")
 
 
     try:

@@ -118,11 +118,11 @@ ingredients = [
     Ingredient(name='Garlic', price=0.5, diet='Vegan')
 ]
 postal_code_areas = [
-    PostalCodeArea(postal_code='11111', city='Maastricht', delivery_person_count=2),
-    PostalCodeArea(postal_code='22222', city='Amsterdam', delivery_person_count=2),
-    PostalCodeArea(postal_code='33333', city='Eindhoven', delivery_person_count=2),
-    PostalCodeArea(postal_code='44444', city='Rotterdam', delivery_person_count=2),
-    PostalCodeArea(postal_code='55555', city='Utrecht', delivery_person_count=2)
+    PostalCodeArea(postal_code='11111', city='Maastricht', delivery_person_count=3),
+    PostalCodeArea(postal_code='22222', city='Amsterdam', delivery_person_count=3),
+    PostalCodeArea(postal_code='33333', city='Eindhoven', delivery_person_count=3),
+    PostalCodeArea(postal_code='44444', city='Rotterdam', delivery_person_count=3),
+    PostalCodeArea(postal_code='55555', city='Utrecht', delivery_person_count=3)
 ]
 
 delivery_persons = [
